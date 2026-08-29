@@ -39,6 +39,7 @@
             "@iptvnator/playlist/shared/util": [
                 "libs/playlist/shared/util/src/index.ts"
             ],
+            "@iptvnator/ui/tv-navigation": ["libs/ui/tv-navigation/src/index.ts"],
             "@iptvnator/ui/epg": ["libs/ui/epg/src/index.ts"],
             "@iptvnator/ui/epg/date": ["libs/ui/epg/src/lib/epg-date.ts"],
             "@iptvnator/ui/epg/progress-panel": [
