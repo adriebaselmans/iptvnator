@@ -1,0 +1,16 @@
+@for (category of categories(); track trackById($index, category)) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-category-rail__item"
+        [class.tv-category-rail__item--active]="
+            category.id === selectedCategoryId()
+        "
+        (click)="categorySelected.emit(category.id)"
+    >
+        {{ category.label }}
+        @if (category.count !== undefined) {
+            <span class="tv-category-rail__count">{{ category.count }}</span>
+        }
+    </button>
+}

@@ -1,0 +1,21 @@
+{
+    "name": "workspace-tv-shell-ui",
+    "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/workspace/tv-shell/ui/src",
+    "prefix": "lib",
+    "projectType": "library",
+    "tags": ["scope:web", "domain:workspace", "type:ui"],
+    "targets": {
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+            "options": {
+                "jestConfig": "libs/workspace/tv-shell/ui/jest.config.ts",
+                "tsConfig": "libs/workspace/tv-shell/ui/tsconfig.spec.json"
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint"
+        }
+    }
+}

@@ -1,0 +1,34 @@
+:host {
+    display: block;
+    /* Single scroll owner for the grid pane; the rail above owns its own. */
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.tv-poster-grid__items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+    padding: 0.25rem 0.25rem 2rem;
+}
+
+.tv-poster-grid__appending {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0;
+}
+
+.tv-poster-grid__spinner {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 3px solid var(--app-separator, rgba(255, 255, 255, 0.14));
+    border-top-color: var(--app-selection-color, #78adff);
+    animation: tv-poster-grid-spin 800ms linear infinite;
+}
+
+@keyframes tv-poster-grid-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

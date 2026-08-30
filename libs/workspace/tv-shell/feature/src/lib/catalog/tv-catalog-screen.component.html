@@ -1,0 +1,43 @@
+<h1 class="tv-catalog-screen__title">{{ titleKey() | translate }}</h1>
+
+@if (errorReason()) {
+    <lib-tv-catalog-state
+        variant="error"
+        [title]="'TV.CATALOG.ERROR_TITLE' | translate"
+        [description]="'TV.CATALOG.ERROR_DESCRIPTION' | translate"
+        [retryLabel]="'TV.CATALOG.RETRY' | translate"
+        (retry)="onRetry()"
+    />
+} @else if (isLoading()) {
+    <lib-tv-catalog-state
+        variant="loading"
+        [title]="'TV.CATALOG.LOADING' | translate"
+    />
+} @else if (isEmpty()) {
+    <lib-tv-catalog-state
+        variant="empty"
+        [title]="'TV.CATALOG.EMPTY_TITLE' | translate"
+        [description]="'TV.CATALOG.EMPTY_DESCRIPTION' | translate"
+    />
+} @else {
+    <lib-tv-category-rail
+        [tvFocusGroup]="railGroupId"
+        [neighbours]="railNeighbours"
+        [categories]="railItems()"
+        [selectedCategoryId]="selectedCategoryId()"
+        (categorySelected)="onCategorySelected($event)"
+    />
+    <div class="tv-catalog-screen__grid-host" #gridHost>
+        <lib-tv-poster-grid
+            [tvFocusGroup]="gridGroupId"
+            orientation="grid"
+            [columnCount]="columnCount()"
+            [neighbours]="gridNeighbours"
+            [items]="gridItems()"
+            [hasMore]="hasMore()"
+            [kind]="gridKind()"
+            (itemActivated)="onItemActivated($event)"
+            (loadMoreRequested)="onLoadMore()"
+        />
+    </div>
+}

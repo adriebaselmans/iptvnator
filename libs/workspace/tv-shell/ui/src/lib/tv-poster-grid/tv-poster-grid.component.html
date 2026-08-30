@@ -1,0 +1,15 @@
+<div class="tv-poster-grid__items">
+    @for (item of items(); track item.id) {
+        <lib-tv-poster-card
+            [title]="item.title"
+            [posterUrl]="item.posterUrl"
+            [kind]="kind()"
+            (click)="itemActivated.emit(item)"
+        />
+    }
+</div>
+@if (appending()) {
+    <div class="tv-poster-grid__appending" aria-hidden="true">
+        <div class="tv-poster-grid__spinner"></div>
+    </div>
+}

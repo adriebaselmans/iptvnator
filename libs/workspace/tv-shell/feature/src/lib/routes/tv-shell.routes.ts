@@ -15,15 +15,21 @@ const loadTvPlaceholderScreenComponent: ComponentLoader = () =>
         (c) => c.TvPlaceholderScreenComponent
     );
 
+const loadTvCatalogScreenComponent: ComponentLoader = () =>
+    import('../catalog/tv-catalog-screen.component').then(
+        (c) => c.TvCatalogScreenComponent
+    );
+
 /**
  * The `/tv` route subtree (§5.2). Mirrors the workspace's Xtream route
  * shape (`xtreams/:id/...`) so a future "open this item in the other shell"
  * mapping stays trivial.
  *
- * Only the source picker (`''`) is a real Phase 2 screen. Every
- * `xtreams/:id/*` screen renders `TvPlaceholderScreenComponent` until its
- * owning phase (see the file header of that component) replaces it — the
- * routes exist now so navigation and deep links resolve.
+ * The source picker (`''`) is a Phase 2 screen; `movies`/`series` are Phase
+ * 3a (§7.4, `TvCatalogScreenComponent`, driven by route `data.tvCatalogType`).
+ * `home`/`live`/`search`/`detail` still render `TvPlaceholderScreenComponent`
+ * until their owning phase replaces them — the routes exist now so
+ * navigation and deep links resolve.
  */
 export function createTvRoutes(): Route[] {
     return [
@@ -48,13 +54,13 @@ export function createTvRoutes(): Route[] {
                 },
                 {
                     path: 'xtreams/:id/movies',
-                    data: { tvScreen: 'movies' },
-                    loadComponent: loadTvPlaceholderScreenComponent,
+                    data: { tvScreen: 'movies', tvCatalogType: 'vod' },
+                    loadComponent: loadTvCatalogScreenComponent,
                 },
                 {
                     path: 'xtreams/:id/series',
-                    data: { tvScreen: 'series' },
-                    loadComponent: loadTvPlaceholderScreenComponent,
+                    data: { tvScreen: 'series', tvCatalogType: 'series' },
+                    loadComponent: loadTvCatalogScreenComponent,
                 },
                 {
                     path: 'xtreams/:id/search',

@@ -1,0 +1,42 @@
+:host {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.5rem 0 1rem;
+    /* This rail is the scroll owner for its own row; the poster grid below
+       owns its own scroll independently. */
+}
+
+.tv-category-rail__item {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background: var(--app-widget-bg, #1e2330);
+    color: var(--app-on-surface, #e6e1e5);
+    font-size: 1.05rem;
+    cursor: pointer;
+    outline: none;
+    transition:
+        border-color 120ms ease,
+        background-color 120ms ease;
+}
+
+.tv-category-rail__item--active {
+    background: var(--app-selection-surface, rgba(120, 173, 255, 0.18));
+    color: var(--app-selection-color, #78adff);
+}
+
+.tv-category-rail__item.tv-focused {
+    border-color: var(--app-selection-color, #78adff);
+    box-shadow: 0 0 0 6px var(--app-selection-glow, rgba(120, 173, 255, 0.4));
+}
+
+.tv-category-rail__count {
+    color: var(--app-muted-color, #8891a4);
+    font-size: 0.9rem;
+}

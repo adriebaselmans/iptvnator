@@ -1649,6 +1649,17 @@
         "PLACEHOLDER": {
             "TITLE": "{{screen}} is coming soon",
             "SUBTITLE": "This screen is not built yet."
+        },
+        "CATALOG": {
+            "TITLE_MOVIES": "Movies",
+            "TITLE_SERIES": "Series",
+            "ALL_CATEGORIES": "All",
+            "LOADING": "Loading…",
+            "EMPTY_TITLE": "Nothing here yet",
+            "EMPTY_DESCRIPTION": "This category has no titles.",
+            "ERROR_TITLE": "Could not load this catalogue",
+            "ERROR_DESCRIPTION": "Check the connection to your source and try again.",
+            "RETRY": "Retry"
         }
     }
 }

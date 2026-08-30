@@ -1,0 +1,21 @@
+<div class="tv-catalog-state__body">
+    @if (variant() === 'loading') {
+        <div class="tv-catalog-state__spinner" aria-hidden="true"></div>
+    }
+    <h2 class="tv-catalog-state__title">{{ title() }}</h2>
+    @if (description(); as description) {
+        <p class="tv-catalog-state__description">{{ description }}</p>
+    }
+    @if (variant() === 'error') {
+        <div [tvFocusGroup]="retryGroupId()" orientation="row">
+            <button
+                type="button"
+                tvFocusable
+                class="tv-catalog-state__retry"
+                (click)="retry.emit()"
+            >
+                {{ retryLabel() }}
+            </button>
+        </div>
+    }
+</div>
