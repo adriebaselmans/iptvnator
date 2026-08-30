@@ -4,21 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
-import { selectAllPlaylistsMeta } from '@iptvnator/m3u-state';
-import { provideMockStore } from '@ngrx/store/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { TvPlaylistSessionService } from '../session/tv-playlist-session.service';
 import { TvCatalogScreenComponent } from './tv-catalog-screen.component';
 
 interface FakeXtreamStore {
-    playlistId: ReturnType<typeof signal<string | null>>;
-    currentPlaylist: ReturnType<typeof signal<{ id: string } | null>>;
-    resetStore: jest.Mock;
-    setCurrentPlaylist: jest.Mock;
-    fetchXtreamPlaylist: jest.Mock;
-    checkPortalStatus: jest.Mock;
     setSelectedContentType: jest.Mock;
-    isContentInitialized: jest.Mock;
-    initializeContent: jest.Mock;
     getCategoriesBySelectedType: ReturnType<typeof signal<unknown[]>>;
     getCategoryItemCounts: ReturnType<typeof signal<Map<number, number>>>;
     selectedCategoryId: ReturnType<typeof signal<number | null>>;
@@ -31,19 +22,13 @@ interface FakeXtreamStore {
     retryContentInitialization: jest.Mock;
 }
 
-function createFakeXtreamStore(): FakeXtreamStore {
-    const callOrder: string[] = [];
+interface FakeTvPlaylistSessionService {
+    ensureBootstrapped: jest.Mock;
+}
 
+function createFakeXtreamStore(): FakeXtreamStore {
     return {
-        playlistId: signal<string | null>('p1'),
-        currentPlaylist: signal<{ id: string } | null>({ id: 'p1' }),
-        resetStore: jest.fn(),
-        setCurrentPlaylist: jest.fn(),
-        fetchXtreamPlaylist: jest.fn().mockResolvedValue(undefined),
-        checkPortalStatus: jest.fn().mockResolvedValue('active'),
         setSelectedContentType: jest.fn(),
-        isContentInitialized: jest.fn().mockReturnValue(true),
-        initializeContent: jest.fn().mockResolvedValue(undefined),
         getCategoriesBySelectedType: signal<unknown[]>([]),
         getCategoryItemCounts: signal<Map<number, number>>(new Map()),
         selectedCategoryId: signal<number | null>(null),
@@ -53,10 +38,13 @@ function createFakeXtreamStore(): FakeXtreamStore {
         contentInitBlockReason: signal<string | null>(null),
         setSelectedCategory: jest.fn(),
         loadMoreContent: jest.fn(),
-        retryContentInitialization: jest.fn(() => {
-            callOrder.push('retryContentInitialization');
-            return Promise.resolve();
-        }),
+        retryContentInitialization: jest.fn(() => Promise.resolve()),
+    };
+}
+
+function createFakeSession(): FakeTvPlaylistSessionService {
+    return {
+        ensureBootstrapped: jest.fn().mockResolvedValue(undefined),
     };
 }
 
@@ -65,8 +53,10 @@ async function setup(
 ): Promise<{
     fixture: ComponentFixture<TvCatalogScreenComponent>;
     store: FakeXtreamStore;
+    session: FakeTvPlaylistSessionService;
 }> {
     const store = createFakeXtreamStore();
+    const session = createFakeSession();
 
     await TestBed.configureTestingModule({
         imports: [
@@ -76,9 +66,7 @@ async function setup(
         ],
         providers: [
             { provide: XtreamStore, useValue: store },
-            provideMockStore({
-                selectors: [{ selector: selectAllPlaylistsMeta, value: [] }],
-            }),
+            { provide: TvPlaylistSessionService, useValue: session },
             {
                 provide: ActivatedRoute,
                 useValue: {
@@ -91,7 +79,7 @@ async function setup(
 
     const fixture = TestBed.createComponent(TvCatalogScreenComponent);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { fixture, store: store as any };
+    return { fixture, store: store as any, session };
 }
 
 describe('TvCatalogScreenComponent', () => {
@@ -167,10 +155,25 @@ describe('TvCatalogScreenComponent', () => {
     });
 
     it('bootstraps the store for the resolved playlist id and content type', async () => {
-        const { fixture, store } = await setup('series');
+        const { fixture, store, session } = await setup('series');
         fixture.detectChanges();
         await fixture.whenStable();
 
+        // The playlist-level bootstrap (§8.1a) is delegated to the shared
+        // session rather than performed by the screen itself.
+        expect(session.ensureBootstrapped).toHaveBeenCalledWith('p1');
         expect(store.setSelectedContentType).toHaveBeenCalledWith('series');
+    });
+
+    it('does not set the content type when the shared bootstrap fails', async () => {
+        const { fixture, store, session } = await setup();
+        session.ensureBootstrapped.mockRejectedValue(
+            new Error('portal unreachable')
+        );
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(store.setSelectedContentType).not.toHaveBeenCalled();
     });
 });

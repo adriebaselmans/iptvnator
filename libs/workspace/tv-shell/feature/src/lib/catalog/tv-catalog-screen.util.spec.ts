@@ -3,7 +3,6 @@ import {
     resolveTvCatalogItemId,
     toTvCatalogDetailType,
     toTvPosterGridItem,
-    toTvXtreamPlaylistData,
 } from './tv-catalog-screen.util';
 
 describe('toTvCatalogDetailType', () => {
@@ -120,43 +119,5 @@ describe('buildTvCategoryRailItems', () => {
         );
 
         expect(items).toEqual([{ id: null, label: 'All', count: 0 }]);
-    });
-});
-
-describe('toTvXtreamPlaylistData', () => {
-    it('converts a well-formed Xtream playlist meta', () => {
-        expect(
-            toTvXtreamPlaylistData({
-                _id: 'p1',
-                title: 'My Source',
-                serverUrl: 'http://example.test',
-                username: 'user',
-                password: 'pass',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any)
-        ).toEqual({
-            id: 'p1',
-            name: 'My Source',
-            title: 'My Source',
-            updateDate: undefined,
-            serverUrl: 'http://example.test',
-            username: 'user',
-            password: 'pass',
-            type: 'xtream',
-        });
-    });
-
-    it('returns null when required connection fields are missing', () => {
-        expect(
-            toTvXtreamPlaylistData({
-                _id: 'p1',
-                serverUrl: 'http://example.test',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any)
-        ).toBeNull();
-    });
-
-    it('returns null for a null playlist', () => {
-        expect(toTvXtreamPlaylistData(null)).toBeNull();
     });
 });

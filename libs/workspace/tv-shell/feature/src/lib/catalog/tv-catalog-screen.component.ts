@@ -12,12 +12,9 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Store } from '@ngrx/store';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { map, startWith } from 'rxjs';
-import { selectAllPlaylistsMeta } from '@iptvnator/m3u-state';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
-import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import {
     TvCatalogStateComponent,
@@ -26,11 +23,11 @@ import {
     computeTvGridColumnCount,
     type TvPosterGridItem,
 } from '@iptvnator/workspace/tv-shell/ui';
+import { TvPlaylistSessionService } from '../session/tv-playlist-session.service';
 import {
     buildTvCategoryRailItems,
     toTvCatalogDetailType,
     toTvPosterGridItem,
-    toTvXtreamPlaylistData,
     type TvCatalogContentType,
 } from './tv-catalog-screen.util';
 
@@ -61,8 +58,8 @@ const GRID_GROUP_ID = 'tv-catalog-grid';
 export class TvCatalogScreenComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
-    private readonly ngrxStore = inject(Store);
     private readonly store = inject(XtreamStore);
+    private readonly session = inject(TvPlaylistSessionService);
     private readonly translate = inject(TranslateService);
     private readonly focusService = inject(TvFocusService);
     private readonly destroyRef = inject(DestroyRef);
@@ -75,9 +72,6 @@ export class TvCatalogScreenComponent {
     private readonly gridHost =
         viewChild<ElementRef<HTMLElement>>('gridHost');
 
-    private readonly playlists = this.ngrxStore.selectSignal(
-        selectAllPlaylistsMeta
-    );
     private readonly languageTick = toSignal(
         this.translate.onLangChange.pipe(startWith(null)),
         { initialValue: null }
@@ -237,30 +231,20 @@ export class TvCatalogScreenComponent {
         playlistId: string,
         contentType: TvCatalogContentType
     ): Promise<void> {
-        const needsPlaylistLoad =
-            this.store.playlistId() !== playlistId ||
-            this.store.currentPlaylist()?.id !== playlistId;
-
-        if (needsPlaylistLoad) {
-            const meta =
-                this.playlists().find(
-                    (playlist: PlaylistMeta) => playlist._id === playlistId
-                ) ?? null;
-            const playlistData = toTvXtreamPlaylistData(meta);
-            if (!playlistData) {
-                return;
-            }
-
-            this.store.resetStore(playlistId);
-            this.store.setCurrentPlaylist(playlistData);
-            await this.store.fetchXtreamPlaylist();
-            await this.store.checkPortalStatus();
+        // The playlist-level sequence (reset, load, fetch, portal status,
+        // initializeContent) is owned by the shared session (§8.1a): every
+        // TV screen for this playlist joins the same bootstrap instead of
+        // re-running it. `setSelectedContentType` stays here — it is cheap,
+        // idempotent, screen-scoped UI selection, not something the session
+        // needs to cache.
+        try {
+            await this.session.ensureBootstrapped(playlistId);
+        } catch {
+            // Store-side failure state (contentInitBlockReason /
+            // portalStatus) already reflects the failure for the error
+            // template's Retry affordance; nothing further to do here.
+            return;
         }
-
         this.store.setSelectedContentType(contentType);
-
-        if (needsPlaylistLoad || !this.store.isContentInitialized()) {
-            await this.store.initializeContent();
-        }
     }
 }

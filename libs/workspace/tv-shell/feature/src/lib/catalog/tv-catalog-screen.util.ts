@@ -1,7 +1,5 @@
 import type { TvCategoryRailItem, TvPosterGridItem } from '@iptvnator/workspace/tv-shell/ui';
-import type { XtreamPlaylistData } from '@iptvnator/portal/xtream/data-access';
 import type { ContentType } from '@iptvnator/portal/xtream/data-access';
-import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
 
 /** `/tv/xtreams/:id/movies` and `/tv/xtreams/:id/series` both route through this screen (§7.4). */
 export type TvCatalogContentType = Extract<ContentType, 'vod' | 'series'>;
@@ -108,32 +106,4 @@ export function buildTvCategoryRailItems(
     }
 
     return items;
-}
-
-/** Mirrors `XtreamWorkspaceRouteSession`'s playlist-meta conversion, scoped to the TV shell's own minimal bootstrap. */
-export function toTvXtreamPlaylistData(
-    playlist: PlaylistMeta | null | undefined
-): XtreamPlaylistData | null {
-    if (
-        !playlist?._id ||
-        !playlist.serverUrl ||
-        !playlist.username ||
-        !playlist.password
-    ) {
-        return null;
-    }
-
-    return {
-        id: playlist._id,
-        name: playlist.title || playlist.filename || playlist._id,
-        title: playlist.title,
-        updateDate: playlist.updateDate,
-        serverUrl: playlist.serverUrl,
-        username: playlist.username,
-        password: playlist.password,
-        type: 'xtream',
-        ...(playlist.userAgent ? { userAgent: playlist.userAgent } : {}),
-        ...(playlist.referrer ? { referrer: playlist.referrer } : {}),
-        ...(playlist.origin ? { origin: playlist.origin } : {}),
-    };
 }
