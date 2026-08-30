@@ -87,6 +87,7 @@ const WINDOW_SET_CLOSE_GUARD = 'WINDOW:SET_CLOSE_GUARD';
 const WINDOW_CONFIRM_CLOSE = 'WINDOW:CONFIRM_CLOSE';
 const WINDOW_CANCEL_CLOSE = 'WINDOW:CANCEL_CLOSE';
 const WINDOW_CLOSE_REQUESTED = 'WINDOW:CLOSE_REQUESTED';
+const WINDOW_SET_KIOSK_MODE = 'WINDOW:SET_KIOSK_MODE';
 const PLAYBACK_SET_KEEP_AWAKE = 'PLAYBACK:SET_KEEP_AWAKE';
 
 const dbSaveContentProgressListeners = new Set<
@@ -428,6 +429,8 @@ const electronApi: ElectronBridgeApi = {
     },
     setWindowCloseGuard: (active: boolean) =>
         ipcRenderer.invoke(WINDOW_SET_CLOSE_GUARD, active),
+    setKioskMode: (enabled: boolean) =>
+        ipcRenderer.invoke(WINDOW_SET_KIOSK_MODE, enabled),
     confirmWindowClose: () => ipcRenderer.invoke(WINDOW_CONFIRM_CLOSE),
     cancelWindowClose: (requestId?: number) =>
         ipcRenderer.invoke(WINDOW_CANCEL_CLOSE, requestId),

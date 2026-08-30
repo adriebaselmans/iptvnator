@@ -270,6 +270,7 @@
         "NAV_RESET": "إعادة تعيين",
         "NAV_ABOUT": "حول",
         "NAV_TMDB": "البيانات الوصفية",
+        "NAV_TV": "TV",
         "TMDB": "البيانات الوصفية (TMDB)",
         "TMDB_DESCRIPTION": "إثراء تفاصيل الأفلام والمسلسلات ببيانات من The Movie Database",
         "TMDB_ENABLE": "تفعيل بيانات TMDB الوصفية",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "عرض الترجمات",
         "SHOW_DASHBOARD": "عرض لوحة التحكم",
         "SHOW_DASHBOARD_DESCRIPTION": "إبقاء لوحة التحكم متاحة في شريط مساحة العمل. عند التعطيل، تصبح المصادر هي أول صفحة في مساحة العمل.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "إضافة مصدر EPG",
         "CLEAR_EPG_DATA": "مسح بيانات EPG",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "تعذّر الوصول إلى البوابة — يتم عرض البيانات المحفوظة عند إضافة البوابة.",
             "NO_ACCOUNT_DATA_TITLE": "لا توجد بيانات للحساب",
             "NO_ACCOUNT_DATA_DESCRIPTION": "لا تنشر هذه البوابة معلومات الحساب لهذا الجهاز."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

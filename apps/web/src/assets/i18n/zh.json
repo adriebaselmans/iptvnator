@@ -270,6 +270,7 @@
         "NAV_RESET": "重置",
         "NAV_ABOUT": "关于",
         "NAV_TMDB": "元数据",
+        "NAV_TV": "TV",
         "TMDB": "元数据（TMDB）",
         "TMDB_DESCRIPTION": "使用来自 The Movie Database 的数据丰富电影和剧集详情",
         "TMDB_ENABLE": "启用 TMDB 元数据",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "显示字幕",
         "SHOW_DASHBOARD": "显示仪表盘",
         "SHOW_DASHBOARD_DESCRIPTION": "在工作区导航栏中保留仪表盘。禁用后，「源」将成为工作区的首页。",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "添加EPG源",
         "CLEAR_EPG_DATA": "清除 EPG 数据",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "无法连接门户 — 正在显示添加门户时保存的数据。",
             "NO_ACCOUNT_DATA_TITLE": "无账户数据",
             "NO_ACCOUNT_DATA_DESCRIPTION": "该门户不为此设备提供账户信息。"
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

@@ -40,6 +40,7 @@ function createFakeWindow(
             state.maximized = false;
         }),
         close: jest.fn(),
+        setKiosk: jest.fn(),
     };
 }
 
@@ -59,6 +60,7 @@ describe('WindowEvents', () => {
             'WINDOW:CLOSE',
             'WINDOW:GET_STATE',
             'WINDOW:MINIMIZE',
+            'WINDOW:SET_KIOSK_MODE',
             'WINDOW:TOGGLE_MAXIMIZE',
         ]);
     });
@@ -110,6 +112,17 @@ describe('WindowEvents', () => {
         const result = mockHandlers.get('WINDOW:GET_STATE')!(fakeEvent);
 
         expect(result).toEqual({ isMaximized: true, isFullScreen: true });
+    });
+
+    it('toggles kiosk mode on the sender window', () => {
+        const win = createFakeWindow();
+        mockFromWebContents.mockReturnValue(win);
+
+        mockHandlers.get('WINDOW:SET_KIOSK_MODE')!(fakeEvent, true);
+        expect(win.setKiosk).toHaveBeenCalledWith(true);
+
+        mockHandlers.get('WINDOW:SET_KIOSK_MODE')!(fakeEvent, false);
+        expect(win.setKiosk).toHaveBeenCalledWith(false);
     });
 
     it('is a safe no-op when the sender has no window', () => {

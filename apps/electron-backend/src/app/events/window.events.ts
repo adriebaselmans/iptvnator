@@ -10,6 +10,7 @@ import {
     WINDOW_CLOSE,
     WINDOW_GET_STATE,
     WINDOW_MINIMIZE,
+    WINDOW_SET_KIOSK_MODE,
     WINDOW_TOGGLE_MAXIMIZE,
 } from '@iptvnator/shared/interfaces';
 
@@ -75,4 +76,11 @@ ipcMain.handle(WINDOW_CLOSE, (event) => {
 
 ipcMain.handle(WINDOW_GET_STATE, (event): WindowState => {
     return getWindowState(getSenderWindow(event));
+});
+
+// TV shell kiosk mode (docs/architecture/tv-shell.md): the window already
+// launches into kiosk mode up front when started with --tv (see app.ts); this
+// is the runtime switch for entering/leaving it without a restart.
+ipcMain.handle(WINDOW_SET_KIOSK_MODE, (event, enabled: boolean) => {
+    getSenderWindow(event)?.setKiosk(enabled);
 });

@@ -270,6 +270,7 @@
         "NAV_RESET": "リセット",
         "NAV_ABOUT": "アプリについて",
         "NAV_TMDB": "メタデータ",
+        "NAV_TV": "TV",
         "TMDB": "メタデータ（TMDB）",
         "TMDB_DESCRIPTION": "The Movie Database のデータで映画やシリーズの詳細情報を充実させます",
         "TMDB_ENABLE": "TMDB メタデータを有効にする",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "字幕を表示",
         "SHOW_DASHBOARD": "ダッシュボードを表示",
         "SHOW_DASHBOARD_DESCRIPTION": "ワークスペースのレールにダッシュボードを表示します。無効にすると、ソースが最初のワークスペースページになります。",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "EPGソースを追加",
         "CLEAR_EPG_DATA": "EPGデータをクリア",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "ポータルに接続できません — ポータル追加時に保存されたデータを表示しています。",
             "NO_ACCOUNT_DATA_TITLE": "アカウント情報なし",
             "NO_ACCOUNT_DATA_DESCRIPTION": "このポータルは、このデバイスのアカウント情報を公開していません。"
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

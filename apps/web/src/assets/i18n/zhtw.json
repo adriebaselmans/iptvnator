@@ -270,6 +270,7 @@
         "NAV_RESET": "重設",
         "NAV_ABOUT": "關於",
         "NAV_TMDB": "中繼資料",
+        "NAV_TV": "TV",
         "TMDB": "中繼資料（TMDB）",
         "TMDB_DESCRIPTION": "使用 The Movie Database 的資料豐富電影與影集的詳細資訊",
         "TMDB_ENABLE": "啟用 TMDB 中繼資料",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "顯示字幕",
         "SHOW_DASHBOARD": "顯示儀表板",
         "SHOW_DASHBOARD_DESCRIPTION": "在工作區側邊欄保留儀表板。停用時，「來源」將成為工作區的第一個頁面。",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "新增 EPG 來源",
         "CLEAR_EPG_DATA": "清除 EPG 資料",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "無法連線至入口網站 — 顯示新增入口網站時儲存的資料。",
             "NO_ACCOUNT_DATA_TITLE": "沒有帳戶資料",
             "NO_ACCOUNT_DATA_DESCRIPTION": "此入口網站不提供此裝置的帳戶資訊。"
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

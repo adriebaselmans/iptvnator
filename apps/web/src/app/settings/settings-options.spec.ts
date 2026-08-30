@@ -94,6 +94,7 @@ describe('buildSettingsSectionNavItems', () => {
             'dashboard',
             'remote-control',
             'tmdb',
+            'tv',
             'backup',
             'reset',
             'about',

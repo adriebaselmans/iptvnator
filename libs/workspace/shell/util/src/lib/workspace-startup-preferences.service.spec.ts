@@ -101,4 +101,22 @@ describe('WorkspaceStartupPreferencesService', () => {
             '/workspace/dashboard'
         );
     });
+
+    it('resolves the app entry to the workspace when TV mode is off', async () => {
+        await expect(service.resolveAppEntryPath()).resolves.toBe(
+            '/workspace'
+        );
+        expect(service.shouldStartInTvMode()).toBe(false);
+    });
+
+    it('resolves the app entry to /tv when TV mode is the startup destination', async () => {
+        (
+            settingsStore as unknown as {
+                startInTvMode: ReturnType<typeof signal<boolean>>;
+            }
+        ).startInTvMode = signal(true);
+
+        await expect(service.resolveAppEntryPath()).resolves.toBe('/tv');
+        expect(service.shouldStartInTvMode()).toBe(true);
+    });
 });

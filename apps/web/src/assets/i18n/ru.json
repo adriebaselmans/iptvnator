@@ -270,6 +270,7 @@
         "NAV_RESET": "Сброс",
         "NAV_ABOUT": "Инфо",
         "NAV_TMDB": "Метаданные",
+        "NAV_TV": "TV",
         "TMDB": "Метаданные (TMDB)",
         "TMDB_DESCRIPTION": "Обогащение информации о фильмах и сериалах данными из The Movie Database",
         "TMDB_ENABLE": "Включить метаданные TMDB",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Отображать субтитры",
         "SHOW_DASHBOARD": "Показывать панель",
         "SHOW_DASHBOARD_DESCRIPTION": "Оставить Dashboard доступным в боковой панели рабочего пространства. Если отключить, первой страницей будет Источники.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "Добавить источник EPG",
         "CLEAR_EPG_DATA": "Очистить данные EPG",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "Портал недоступен — показаны данные, сохранённые при добавлении портала.",
             "NO_ACCOUNT_DATA_TITLE": "Нет данных об аккаунте",
             "NO_ACCOUNT_DATA_DESCRIPTION": "Этот портал не предоставляет информацию об аккаунте для этого устройства."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

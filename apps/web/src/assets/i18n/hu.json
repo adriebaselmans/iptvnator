@@ -270,6 +270,7 @@
         "NAV_RESET": "Alaphelyzetbe állítás",
         "NAV_ABOUT": "Névjegy",
         "NAV_TMDB": "Metaadatok",
+        "NAV_TV": "TV",
         "TMDB": "Metaadatok (TMDB)",
         "TMDB_DESCRIPTION": "Filmek és sorozatok adatainak kiegészítése a The Movie Database adataival",
         "TMDB_ENABLE": "TMDB-metaadatok engedélyezése",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Feliratok megjelenítése",
         "SHOW_DASHBOARD": "Vezérlőpult megjelenítése",
         "SHOW_DASHBOARD_DESCRIPTION": "A Vezérlőpult maradjon elérhető a munkaterület oldalsávjában. Kikapcsolásakor a Források lesz a munkaterület első oldala.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "EPG-forrás hozzáadása",
         "CLEAR_EPG_DATA": "EPG-adatok törlése",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "A portál nem érhető el — a portál hozzáadásakor mentett adatok láthatók.",
             "NO_ACCOUNT_DATA_TITLE": "Nincsenek fiókadatok",
             "NO_ACCOUNT_DATA_DESCRIPTION": "Ez a portál nem tesz közzé fiókadatokat ehhez az eszközhöz."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

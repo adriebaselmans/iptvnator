@@ -674,6 +674,13 @@ export interface ElectronBridgeApi {
      */
     setWindowCloseGuard: (active: boolean) => Promise<void>;
     /**
+     * Runtime switch for the TV shell's kiosk presentation (§5.4). The
+     * window is created in kiosk mode up front when the app launches with
+     * `--tv`; this lets the renderer toggle it afterwards, e.g. entering or
+     * leaving `/tv` without a restart.
+     */
+    setKioskMode: (enabled: boolean) => Promise<void>;
+    /**
      * Completes a close the guard intercepted: the main process re-runs the
      * original intent (window close or app quit) with the guard bypassed.
      */

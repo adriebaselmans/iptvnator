@@ -270,6 +270,7 @@
         "NAV_RESET": "Resetten",
         "NAV_ABOUT": "Over",
         "NAV_TMDB": "Metadata",
+        "NAV_TV": "TV",
         "TMDB": "Metadata (TMDB)",
         "TMDB_DESCRIPTION": "Verrijk film- en seriedetails met gegevens van The Movie Database",
         "TMDB_ENABLE": "TMDB-metadata inschakelen",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Ondertiteling weergeven",
         "SHOW_DASHBOARD": "Dashboard tonen",
         "SHOW_DASHBOARD_DESCRIPTION": "Houd het dashboard beschikbaar in de werkruimtebalk. Wanneer uitgeschakeld, wordt Bronnen de eerste pagina van de werkruimte.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "EPG-bron toevoegen",
         "CLEAR_EPG_DATA": "EPG-gegevens wissen",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "Het portaal is onbereikbaar — de bij het toevoegen opgeslagen gegevens worden getoond.",
             "NO_ACCOUNT_DATA_TITLE": "Geen accountgegevens",
             "NO_ACCOUNT_DATA_DESCRIPTION": "Dit portaal publiceert geen accountinformatie voor dit apparaat."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

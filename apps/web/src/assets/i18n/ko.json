@@ -270,6 +270,7 @@
         "NAV_RESET": "초기화",
         "NAV_ABOUT": "정보",
         "NAV_TMDB": "메타데이터",
+        "NAV_TV": "TV",
         "TMDB": "메타데이터 (TMDB)",
         "TMDB_DESCRIPTION": "The Movie Database의 데이터로 영화 및 시리즈 상세 정보를 보강합니다",
         "TMDB_ENABLE": "TMDB 메타데이터 사용",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Show subtitles",
         "SHOW_DASHBOARD": "대시보드 표시",
         "SHOW_DASHBOARD_DESCRIPTION": "작업 공간 레일에서 대시보드를 사용할 수 있게 유지합니다. 비활성화하면 소스가 작업 공간의 첫 번째 페이지가 됩니다.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "EPG 소스 추가",
         "CLEAR_EPG_DATA": "EPG 데이터 지우기",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "포털에 연결할 수 없습니다 — 포털 추가 시 저장된 데이터를 표시합니다.",
             "NO_ACCOUNT_DATA_TITLE": "계정 정보 없음",
             "NO_ACCOUNT_DATA_DESCRIPTION": "이 포털은 이 기기에 대한 계정 정보를 제공하지 않습니다."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

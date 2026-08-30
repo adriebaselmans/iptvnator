@@ -318,4 +318,67 @@ describe('TvFocusService', () => {
         expect(service.activeGroupId()).toBe('rail');
         expect(service.activeIndex()).toBe(1);
     });
+
+    describe('activeElement()', () => {
+        it('is null while no group is active', () => {
+            registerGroup('rail');
+            registerItems('rail', 3);
+
+            expect(service.activeElement()).toBeNull();
+        });
+
+        it('resolves the active group and index to its element', () => {
+            registerGroup('rail');
+            registerItems('rail', 3);
+            const container = containerFor('rail');
+
+            service.setActive('rail', 1);
+            expect(service.activeElement()).toBe(container.children[1]);
+
+            service.move('right');
+            expect(service.activeElement()).toBe(container.children[2]);
+        });
+
+        it('follows the active group across a group transition', () => {
+            registerGroup('rail', { neighbours: { down: 'grid' } });
+            registerItems('rail', 2);
+            registerGroup('grid', { orientation: 'grid', columnCount: 2 });
+            registerItems('grid', 4);
+            service.setActive('rail', 0);
+
+            service.move('down');
+
+            expect(service.activeGroupId()).toBe('grid');
+            expect(service.activeElement()).toBe(
+                containerFor('grid').children[service.activeIndex()]
+            );
+        });
+
+        it('is null once the active group is unregistered', () => {
+            registerGroup('rail');
+            registerItems('rail', 2);
+            service.setActive('rail', 0);
+
+            service.unregisterGroup('rail');
+
+            expect(service.activeElement()).toBeNull();
+        });
+
+        it('reports an element that lives outside any particular subtree', () => {
+            // An overlay renders into its own container attached to the body,
+            // not into the shell's subtree. The service must still resolve it.
+            const overlayContainer = document.createElement('div');
+            document.body.appendChild(overlayContainer);
+            const overlayItem = document.createElement('button');
+            overlayContainer.appendChild(overlayItem);
+
+            registerGroup('overlay');
+            service.registerItem('overlay', Symbol('overlay'), overlayItem);
+            service.setActive('overlay', 0);
+
+            expect(service.activeElement()).toBe(overlayItem);
+
+            overlayContainer.remove();
+        });
+    });
 });

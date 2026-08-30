@@ -1,0 +1,28 @@
+<div class="tv-source-picker" data-test-id="tv-source-picker">
+    <h1>{{ 'TV.SOURCE_PICKER.TITLE' | translate }}</h1>
+
+    @if (xtreamSources().length === 0) {
+        <p class="tv-source-picker__empty" data-test-id="tv-source-picker-empty">
+            {{ 'TV.SOURCE_PICKER.EMPTY' | translate }}
+        </p>
+    } @else {
+        <div
+            class="tv-source-picker__cards"
+            tvFocusGroup="tv-source-picker"
+            orientation="row"
+            data-test-id="tv-source-picker-cards"
+        >
+            @for (source of xtreamSources(); track source._id) {
+                <button
+                    type="button"
+                    tvFocusable
+                    class="tv-source-picker__card"
+                    data-test-id="tv-source-picker-card"
+                    [routerLink]="['/tv/xtreams', source._id, 'home']"
+                >
+                    {{ sourceLabel(source) }}
+                </button>
+            }
+        </div>
+    }
+</div>

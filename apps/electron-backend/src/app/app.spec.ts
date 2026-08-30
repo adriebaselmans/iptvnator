@@ -47,6 +47,7 @@ import {
     getMainWindowWebPreferences,
     isExternalBrowserUrl,
     isTrustedRendererNavigationUrl,
+    shouldStartInKioskMode,
 } from './app';
 import App from './app';
 import { app as electronApp, BrowserWindow, screen } from 'electron';
@@ -188,6 +189,14 @@ describe('Electron app security helpers', () => {
         mockIsFrameCopyRuntimeUsable.mockReturnValue(true);
 
         expect(getMainWindowWebPreferences()?.sandbox).toBe(false);
+    });
+
+    it('starts in kiosk mode only when --tv is on argv', () => {
+        expect(shouldStartInKioskMode(['electron', '--tv'])).toBe(true);
+        expect(
+            shouldStartInKioskMode(['electron', 'playlist.m3u'])
+        ).toBe(false);
+        expect(shouldStartInKioskMode([])).toBe(false);
     });
 
     it('treats only http and https URLs as external browser URLs', () => {

@@ -1,0 +1,30 @@
+<section
+    class="settings-group"
+    id="tv"
+    [formGroup]="form()"
+>
+    <header class="settings-group__header">
+        <div class="settings-group__header-icon">
+            <mat-icon>tv</mat-icon>
+        </div>
+        <div class="settings-group__header-text">
+            <h3>{{ 'SETTINGS.TV' | translate }}</h3>
+            <p>{{ 'SETTINGS.TV_SUBTITLE' | translate }}</p>
+        </div>
+    </header>
+
+    <div class="setting-item">
+        <div class="setting-item__meta">
+            <h4>{{ 'SETTINGS.START_IN_TV_MODE' | translate }}</h4>
+            <p>
+                {{ 'SETTINGS.START_IN_TV_MODE_DESCRIPTION' | translate }}
+            </p>
+        </div>
+        <div class="setting-item__control setting-item__toggle">
+            <mat-checkbox
+                formControlName="startInTvMode"
+                data-test-id="toggle-start-in-tv-mode"
+            ></mat-checkbox>
+        </div>
+    </div>
+</section>

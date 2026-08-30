@@ -127,6 +127,17 @@ describe('main preload DB IPC contract', () => {
         }
     );
 
+    it('forwards setKioskMode to the WINDOW:SET_KIOSK_MODE channel', async () => {
+        const api = getExposedApi();
+
+        await api.setKioskMode(true);
+
+        expect(mockIpcRenderer.invoke).toHaveBeenLastCalledWith(
+            'WINDOW:SET_KIOSK_MODE',
+            true
+        );
+    });
+
     it('forwards scoped user-agent override arguments', async () => {
         const api = getExposedApi();
 

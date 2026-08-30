@@ -20,6 +20,8 @@ describe('app routes', () => {
         router: { parseUrl: (url: string) => unknown }
     ) => unknown;
 
+    let tvRoute: import('@angular/router').Route | undefined;
+
     beforeAll(async () => {
         jest.unstable_mockModule(
             '@iptvnator/playlist/m3u/feature-player',
@@ -52,11 +54,38 @@ describe('app routes', () => {
                 ],
             })
         );
+        jest.unstable_mockModule(
+            '@iptvnator/workspace/tv-shell/feature',
+            () => ({
+                createTvRoutes: () => [
+                    {
+                        path: '',
+                        loadComponent: () =>
+                            Promise.resolve({ TvShellComponent: class {} }),
+                        children: [
+                            {
+                                path: '',
+                                pathMatch: 'full',
+                                loadComponent: () =>
+                                    Promise.resolve({
+                                        TvSourcePickerComponent: class {},
+                                    }),
+                            },
+                            {
+                                path: 'xtreams/:id/home',
+                                data: { tvScreen: 'home' },
+                            },
+                        ],
+                    },
+                ],
+            })
+        );
 
         const appRoutes = await import('./app.routes');
         const { routes } = appRoutes;
         workspaceRoute = routes.find((route) => route.path === 'workspace');
         workspaceChildren = workspaceRoute?.children ?? [];
+        tvRoute = routes.find((route) => route.path === 'tv');
         resolveElectronOnlyGlobalSearchRoute =
             appRoutes.resolveElectronOnlyGlobalSearchRoute;
         resolveRecordingsCapabilityRoute =
@@ -223,5 +252,32 @@ describe('app routes', () => {
         );
 
         expect(dashboardRoute?.canActivate).toHaveLength(1);
+    });
+
+    it('adds a /tv route sibling of /workspace carrying the tv layout and settings resolver', async () => {
+        expect(tvRoute?.data).toEqual({ layout: 'tv' });
+        expect(typeof tvRoute?.resolve?.['settingsReady']).toBe('function');
+        expect(typeof tvRoute?.loadChildren).toBe('function');
+    });
+
+    it('resolves the /tv route subtree through the tv-shell feature boundary', async () => {
+        const loadChildren = tvRoute?.loadChildren as
+            | (() => Promise<import('@angular/router').Route[]>)
+            | undefined;
+        const tvChildRoutes = (await loadChildren?.()) ?? [];
+        const shellRoute = tvChildRoutes.find((route) => route.path === '');
+
+        expect(typeof shellRoute?.loadComponent).toBe('function');
+
+        const shellChildren = shellRoute?.children ?? [];
+        const sourcePickerRoute = shellChildren.find(
+            (route) => route.path === ''
+        );
+        const homeRoute = shellChildren.find(
+            (route) => route.path === 'xtreams/:id/home'
+        );
+
+        expect(typeof sourcePickerRoute?.loadComponent).toBe('function');
+        expect(homeRoute?.data).toEqual({ tvScreen: 'home' });
     });
 });

@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import {
     computeNextFocusIndex,
     type FocusDirection,
@@ -115,6 +115,27 @@ export class TvFocusService {
 
     readonly activeGroupId = this.activeGroupSignal.asReadonly();
     readonly activeIndex = this.activeIndexSignal.asReadonly();
+
+    /**
+     * The element that currently holds focus, or `null` when nothing is
+     * active.
+     *
+     * This service is the authority on that, not the `.tv-focused` class. A
+     * consumer must never locate the focused element by querying its own DOM
+     * subtree for that class: an overlay rendered through the CDK overlay
+     * container is attached to `document.body` and therefore sits outside the
+     * shell's subtree, so such a query would silently find nothing while the
+     * channel bar or EPG grid is open. The class is a rendering detail; this
+     * accessor is the lookup contract.
+     */
+    readonly activeElement = computed<Element | null>(() => {
+        const groupId = this.activeGroupSignal();
+        if (!groupId) {
+            return null;
+        }
+        const group = this.groupsSignal().get(groupId);
+        return group?.items[this.activeIndexSignal()]?.element ?? null;
+    });
 
     registerGroup(registration: FocusGroupRegistration): void {
         this.mutateGroups((groups) => {

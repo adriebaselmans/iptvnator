@@ -179,6 +179,12 @@ export function buildSettingsSectionNavItems({
             visible: true,
         },
         {
+            id: 'tv',
+            label: 'SETTINGS.NAV_TV',
+            icon: 'tv',
+            visible: true,
+        },
+        {
             id: 'backup',
             label: 'SETTINGS.NAV_BACKUP',
             icon: 'backup',

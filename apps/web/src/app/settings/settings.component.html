@@ -63,6 +63,9 @@
                 @case ('tmdb') {
                     <app-settings-tmdb-section [form]="settingsForm" />
                 }
+                @case ('tv') {
+                    <app-settings-tv-section [form]="settingsForm" />
+                }
                 @case ('backup') {
                     <app-settings-backup-section
                         [isPwa]="isPwa"

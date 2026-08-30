@@ -110,6 +110,9 @@
             "@iptvnator/workspace/dashboard/feature": [
                 "libs/workspace/dashboard/feature/src/index.ts"
             ],
+            "@iptvnator/workspace/tv-shell/feature": [
+                "libs/workspace/tv-shell/feature/src/index.ts"
+            ],
             "@iptvnator/workspace/dashboard/data-access": [
                 "libs/workspace/dashboard/data-access/src/index.ts"
             ],

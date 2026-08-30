@@ -37,6 +37,7 @@ const DEFAULT_SETTINGS: Settings = {
     showCaptions: false,
     showDashboard: true,
     startupBehavior: StartupBehavior.FirstView,
+    startInTvMode: false,
     showExternalPlaybackBar: true,
     stripCountryPrefix: false,
     theme: Theme.SystemTheme,
@@ -240,6 +241,9 @@ export const SettingsStore = signalStore(
                     showCaptions: store.showCaptions(),
                     showDashboard: store.showDashboard(),
                     startupBehavior: store.startupBehavior(),
+                    startInTvMode:
+                        store.startInTvMode?.() ??
+                        DEFAULT_SETTINGS.startInTvMode,
                     showExternalPlaybackBar:
                         store.showExternalPlaybackBar?.() ??
                         DEFAULT_SETTINGS.showExternalPlaybackBar,

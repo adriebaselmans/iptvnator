@@ -44,6 +44,7 @@ export function createSettingsForm(
         language: Language.ENGLISH,
         showCaptions: false,
         showDashboard: true,
+        startInTvMode: false,
         dashboardRails: formBuilder.group({
             hero: DEFAULT_DASHBOARD_RAILS_SETTINGS.hero,
             continueWatching: DEFAULT_DASHBOARD_RAILS_SETTINGS.continueWatching,
@@ -132,6 +133,7 @@ export function createSettingsFromFormValue(
         language: value.language ?? Language.ENGLISH,
         showCaptions: value.showCaptions ?? false,
         showDashboard: value.showDashboard ?? true,
+        startInTvMode: value.startInTvMode ?? false,
         dashboardRails: normalizeDashboardRailsSettings(value.dashboardRails),
         startupBehavior: value.startupBehavior ?? StartupBehavior.FirstView,
         showExternalPlaybackBar: value.showExternalPlaybackBar ?? true,

@@ -270,6 +270,7 @@
         "NAV_RESET": "Reset",
         "NAV_ABOUT": "About",
         "NAV_TMDB": "Metadata",
+        "NAV_TV": "TV",
         "TMDB": "Metadata (TMDB)",
         "TMDB_DESCRIPTION": "Enrich movie and series details with data from The Movie Database",
         "TMDB_ENABLE": "Enable TMDB metadata",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Show subtitles",
         "SHOW_DASHBOARD": "Show dashboard",
         "SHOW_DASHBOARD_DESCRIPTION": "Keep Dashboard available in the workspace rail. When disabled, Sources becomes the first workspace page.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "Add EPG source",
         "CLEAR_EPG_DATA": "Clear EPG data",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "The portal could not be reached — showing the data saved when the portal was added.",
             "NO_ACCOUNT_DATA_TITLE": "No account details",
             "NO_ACCOUNT_DATA_DESCRIPTION": "This portal does not publish account information for this device."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

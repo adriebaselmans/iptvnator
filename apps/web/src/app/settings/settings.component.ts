@@ -44,6 +44,7 @@ import { SettingsRemoteControlFacade } from './settings-remote-control.facade';
 import { SettingsRemoteControlSectionComponent } from './settings-remote-control-section.component';
 import { SettingsResetSectionComponent } from './settings-reset-section.component';
 import { SettingsTmdbSectionComponent } from './settings-tmdb-section.component';
+import { SettingsTvSectionComponent } from './settings-tv-section.component';
 import {
     SettingsUnsavedChangesChoice,
     SettingsUnsavedChangesDialogComponent,
@@ -88,6 +89,7 @@ export const SETTINGS_DEFAULT_SECTION = 'general';
         SettingsRemoteControlSectionComponent,
         SettingsResetSectionComponent,
         SettingsTmdbSectionComponent,
+        SettingsTvSectionComponent,
     ],
     providers: [
         SettingsAppUpdateFacade,

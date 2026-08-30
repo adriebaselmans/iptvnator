@@ -270,6 +270,7 @@
         "NAV_RESET": "إعادة الضبط",
         "NAV_ABOUT": "حول",
         "NAV_TMDB": "الميتاداتا",
+        "NAV_TV": "TV",
         "TMDB": "الميتاداتا (TMDB)",
         "TMDB_DESCRIPTION": "غنّي تفاصيل الأفلام والسلاسل بمعطيات من The Movie Database",
         "TMDB_ENABLE": "فعّل ميتاداتا TMDB",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "وري الترجمة",
         "SHOW_DASHBOARD": "وري لوحة التحكم",
         "SHOW_DASHBOARD_DESCRIPTION": "خلي لوحة التحكم متاحة في شريط مساحة العمل. إلى تعطلت، Sources كيولي أول صفحة في مساحة العمل.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "زيد مصدر EPG",
         "CLEAR_EPG_DATA": "مسح بيانات EPG",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "ما قدرناش نوصلو للبوابة — كنعرضو البيانات اللي تسجلات ملي تزادت البوابة.",
             "NO_ACCOUNT_DATA_TITLE": "ما كايناش بيانات الحساب",
             "NO_ACCOUNT_DATA_DESCRIPTION": "هاد البوابة ما كتعطيش معلومات الحساب لهاد الجهاز."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

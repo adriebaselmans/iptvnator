@@ -13,6 +13,28 @@ export class WorkspaceStartupPreferencesService {
     private readonly settingsStore = inject(SettingsStore);
     private readonly playlistsService = inject(PlaylistsService);
 
+    /**
+     * Resolves where a cold start lands: `/tv` when the user opted into TV
+     * mode as a startup destination (§5.3), otherwise the normal desktop
+     * workspace path. Kept separate from {@link resolveInitialWorkspacePath},
+     * which resolves the workspace's OWN default child route and must keep
+     * returning a workspace path even when reached directly (a deep link to
+     * `/workspace` should not bounce to `/tv`).
+     */
+    async resolveAppEntryPath(): Promise<string> {
+        await this.settingsStore.loadSettings();
+
+        if (this.shouldStartInTvMode()) {
+            return '/tv';
+        }
+
+        return '/workspace';
+    }
+
+    shouldStartInTvMode(): boolean {
+        return this.settingsStore.startInTvMode?.() ?? false;
+    }
+
     async resolveInitialWorkspacePath(): Promise<string> {
         await this.settingsStore.loadSettings();
 

@@ -139,3 +139,7 @@ export const WINDOW_SET_CLOSE_GUARD = 'WINDOW:SET_CLOSE_GUARD';
 export const WINDOW_CONFIRM_CLOSE = 'WINDOW:CONFIRM_CLOSE';
 export const WINDOW_CANCEL_CLOSE = 'WINDOW:CANCEL_CLOSE';
 export const WINDOW_CLOSE_REQUESTED = 'WINDOW:CLOSE_REQUESTED';
+
+// TV shell kiosk mode (runtime switch; the window also launches into kiosk
+// mode up front when started with --tv)
+export const WINDOW_SET_KIOSK_MODE = 'WINDOW:SET_KIOSK_MODE';

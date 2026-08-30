@@ -1,0 +1,28 @@
+.tv-source-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    gap: 2rem;
+    text-align: center;
+}
+
+.tv-source-picker__cards {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+}
+
+.tv-source-picker__card {
+    padding: 1.5rem 2rem;
+    font-size: 1.25rem;
+    border-radius: 0.5rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+
+    &.tv-focused {
+        border-color: var(--mat-app-primary-color, #fff);
+    }
+}

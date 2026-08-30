@@ -147,6 +147,14 @@ export interface Settings {
     showCaptions: boolean;
     showDashboard: boolean;
     startupBehavior: StartupBehavior;
+    /**
+     * Skip the desktop workspace on startup and go straight to the `/tv`
+     * shell (10-foot HTPC UI). Also settable per-launch with the `--tv` CLI
+     * flag, which additionally puts the Electron window in kiosk mode.
+     * Missing values mean off, since existing installs must keep opening the
+     * desktop workspace they already know.
+     */
+    startInTvMode?: boolean;
     /** Show the desktop footer bar for external playback status */
     showExternalPlaybackBar?: boolean;
     /** Strip country/group prefixes like "US | " or "UK - " from channel names */

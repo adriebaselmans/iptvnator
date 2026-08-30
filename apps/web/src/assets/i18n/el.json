@@ -270,6 +270,7 @@
         "NAV_RESET": "Επαναφορά",
         "NAV_ABOUT": "Πληροφορίες",
         "NAV_TMDB": "Μεταδεδομένα",
+        "NAV_TV": "TV",
         "TMDB": "Μεταδεδομένα (TMDB)",
         "TMDB_DESCRIPTION": "Εμπλουτίστε τις λεπτομέρειες ταινιών και σειρών με δεδομένα από το The Movie Database",
         "TMDB_ENABLE": "Ενεργοποίηση μεταδεδομένων TMDB",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Εμφάνιση υπότιτλων",
         "SHOW_DASHBOARD": "Εμφάνιση πίνακα ελέγχου",
         "SHOW_DASHBOARD_DESCRIPTION": "Διατηρήστε τον πίνακα ελέγχου διαθέσιμο στη γραμμή του χώρου εργασίας. Όταν είναι απενεργοποιημένος, οι Πηγές γίνονται η πρώτη σελίδα του χώρου εργασίας.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "Προσθήκη πηγής EPG",
         "CLEAR_EPG_DATA": "Διαγραφή δεδομένων EPG",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "Η πύλη δεν είναι προσβάσιμη — εμφανίζονται τα δεδομένα που αποθηκεύτηκαν κατά την προσθήκη της.",
             "NO_ACCOUNT_DATA_TITLE": "Δεν υπάρχουν στοιχεία λογαριασμού",
             "NO_ACCOUNT_DATA_DESCRIPTION": "Αυτή η πύλη δεν δημοσιεύει πληροφορίες λογαριασμού για αυτήν τη συσκευή."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

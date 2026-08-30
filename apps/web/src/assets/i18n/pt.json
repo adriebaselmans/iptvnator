@@ -270,6 +270,7 @@
         "NAV_RESET": "Redefinir",
         "NAV_ABOUT": "Sobre",
         "NAV_TMDB": "Metadados",
+        "NAV_TV": "TV",
         "TMDB": "Metadados (TMDB)",
         "TMDB_DESCRIPTION": "Enriqueça os detalhes de filmes e séries com dados do The Movie Database",
         "TMDB_ENABLE": "Ativar metadados do TMDB",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Mostrar legendas",
         "SHOW_DASHBOARD": "Mostrar dashboard",
         "SHOW_DASHBOARD_DESCRIPTION": "Mantém o Dashboard disponível na barra lateral do espaço de trabalho. Quando desativado, Fontes torna-se a primeira página do espaço de trabalho.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "Adicionar fonte EPG",
         "CLEAR_EPG_DATA": "Limpar dados de EPG",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "Não foi possível contactar o portal — a mostrar os dados guardados quando o portal foi adicionado.",
             "NO_ACCOUNT_DATA_TITLE": "Sem dados da conta",
             "NO_ACCOUNT_DATA_DESCRIPTION": "Este portal não publica informações da conta para este dispositivo."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }

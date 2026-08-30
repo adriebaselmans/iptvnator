@@ -83,6 +83,16 @@ export function isTrustedRendererNavigationUrl(
     );
 }
 
+/**
+ * The `BrowserWindow` is constructed before the renderer's route is known, so
+ * kiosk mode for `--tv` autostart (§5.4 of the TV shell design) is decided
+ * from argv here rather than by the renderer navigating there. Exported and
+ * pure for unit coverage without spinning up Electron.
+ */
+export function shouldStartInKioskMode(argv: string[]): boolean {
+    return argv.includes('--tv');
+}
+
 export function getMainWindowWebPreferences(): Electron.BrowserWindowConstructorOptions['webPreferences'] {
     // The frame-copy embedded MPV experiment needs the preload script to
     // load the shm frame-reader native addon, which the renderer sandbox
@@ -425,6 +435,7 @@ export default class App {
             minHeight: 600,
             minWidth: 900,
             ...App.getPlatformTitleBarOptions(),
+            kiosk: shouldStartInKioskMode(process.argv),
         });
         App.mainWindow.setMenu(null);
         attachWindowTrace(App.mainWindow);

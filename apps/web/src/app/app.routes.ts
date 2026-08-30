@@ -9,6 +9,9 @@ const settingsReadyResolver = () => inject(SettingsStore).loadSettings();
 const workspaceEntryRedirect = async () =>
     inject(WorkspaceStartupPreferencesService).resolveInitialWorkspacePath();
 
+const rootEntryRedirect = async () =>
+    inject(WorkspaceStartupPreferencesService).resolveAppEntryPath();
+
 const dashboardAccessGuard = async () => {
     const startupPreferences = inject(WorkspaceStartupPreferencesService);
     const router = inject(Router);
@@ -59,7 +62,25 @@ export const routes: Routes = [
     {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'workspace',
+        redirectTo: rootEntryRedirect,
+    },
+    {
+        // The 10-foot TV shell (docs/architecture/tv-shell.md). A sibling of
+        // `workspace`, not nested under it: it renders its own root, has its
+        // own single keydown listener, and shares only the settings resolver
+        // and data layer. `data.layout` matches the `workspace` discriminator
+        // so shared chrome (if any) can key off it the same way.
+        path: 'tv',
+        data: {
+            layout: 'tv',
+        },
+        resolve: {
+            settingsReady: settingsReadyResolver,
+        },
+        loadChildren: () =>
+            import('@iptvnator/workspace/tv-shell/feature').then((m) =>
+                m.createTvRoutes()
+            ),
     },
     {
         path: 'workspace',

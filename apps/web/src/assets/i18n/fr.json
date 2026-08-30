@@ -270,6 +270,7 @@
         "NAV_RESET": "Réinitialiser",
         "NAV_ABOUT": "À propos",
         "NAV_TMDB": "Métadonnées",
+        "NAV_TV": "TV",
         "TMDB": "Métadonnées (TMDB)",
         "TMDB_DESCRIPTION": "Enrichir les détails des films et séries avec les données de The Movie Database",
         "TMDB_ENABLE": "Activer les métadonnées TMDB",
@@ -335,6 +336,10 @@
         "SHOW_CAPTIONS": "Afficher les sous-titres",
         "SHOW_DASHBOARD": "Afficher le tableau de bord",
         "SHOW_DASHBOARD_DESCRIPTION": "Garde le tableau de bord disponible dans le rail de l'espace de travail. Lorsqu'il est désactivé, Sources devient la première page de l'espace de travail.",
+        "TV": "TV",
+        "TV_SUBTITLE": "Settings for the 10-foot TV interface, built for a remote control.",
+        "START_IN_TV_MODE": "Start in TV mode",
+        "START_IN_TV_MODE_DESCRIPTION": "Open the TV interface instead of the desktop workspace on startup. You can also launch directly into TV mode with the --tv command line flag.",
         "ADD_EPG_SOURCE": "Ajouter une source EPG",
         "CLEAR_EPG_DATA": "Effacer les données EPG",
         "CLEAR_EPG_DIALOG": {
@@ -1634,6 +1639,16 @@
             "REFRESH_FAILED": "Le portail est injoignable — affichage des données enregistrées lors de son ajout.",
             "NO_ACCOUNT_DATA_TITLE": "Aucune donnée de compte",
             "NO_ACCOUNT_DATA_DESCRIPTION": "Ce portail ne publie pas d’informations de compte pour cet appareil."
+        }
+    },
+    "TV": {
+        "SOURCE_PICKER": {
+            "TITLE": "Choose a source",
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+        },
+        "PLACEHOLDER": {
+            "TITLE": "{{screen}} is coming soon",
+            "SUBTITLE": "This screen is not built yet."
         }
     }
 }
