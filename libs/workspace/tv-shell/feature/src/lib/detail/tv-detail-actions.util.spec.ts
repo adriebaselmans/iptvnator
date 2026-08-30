@@ -1,11 +1,18 @@
-import type { XtreamSerieEpisode, XtreamVodDetails } from '@iptvnator/shared/interfaces';
+import type {
+    PlaybackPositionData,
+    XtreamSerieEpisode,
+    XtreamVodDetails,
+} from '@iptvnator/shared/interfaces';
 import {
     buildTvEpisodeDownloadPayload,
+    buildTvPlaybackPositionPayload,
     buildTvVodDownloadPayload,
     resolveTvDetailActionGating,
     resolveTvMovieItem,
+    resolveTvResumeSeconds,
     resolveTvSeriesItem,
     toTvEpisodeRowItem,
+    type TvNowPlaying,
 } from './tv-detail-actions.util';
 
 function episode(id: string, info?: { movie_image?: string }): XtreamSerieEpisode {
@@ -191,6 +198,75 @@ describe('buildTvEpisodeDownloadPayload', () => {
             playlistType: 'xtream',
             serverUrl: 'http://host',
             headers: { userAgent: undefined, referer: undefined, origin: undefined },
+        });
+    });
+});
+
+describe('resolveTvResumeSeconds', () => {
+    const positions = new Map<string, PlaybackPositionData>([
+        [
+            'vod_100',
+            {
+                contentXtreamId: 100,
+                contentType: 'vod',
+                positionSeconds: 1234,
+            },
+        ],
+    ]);
+
+    it('returns 0 with no now-playing target', () => {
+        expect(resolveTvResumeSeconds(positions, null)).toBe(0);
+    });
+
+    it('returns 0 when no position is stored for the target', () => {
+        const nowPlaying: TvNowPlaying = { xtreamId: 999, contentType: 'vod' };
+        expect(resolveTvResumeSeconds(positions, nowPlaying)).toBe(0);
+    });
+
+    it('returns the stored position for the exact contentType/xtreamId key', () => {
+        const nowPlaying: TvNowPlaying = { xtreamId: 100, contentType: 'vod' };
+        expect(resolveTvResumeSeconds(positions, nowPlaying)).toBe(1234);
+    });
+});
+
+describe('buildTvPlaybackPositionPayload', () => {
+    it('builds a movie position row', () => {
+        const nowPlaying: TvNowPlaying = { xtreamId: 100, contentType: 'vod' };
+        expect(
+            buildTvPlaybackPositionPayload({
+                playlistId: 'p1',
+                nowPlaying,
+                positionSeconds: 42,
+                durationSeconds: 7200,
+            })
+        ).toEqual({
+            playlistId: 'p1',
+            contentXtreamId: 100,
+            contentType: 'vod',
+            positionSeconds: 42,
+            durationSeconds: 7200,
+        });
+    });
+
+    it('builds an episode position row carrying the series id, omitting a null duration', () => {
+        const nowPlaying: TvNowPlaying = {
+            xtreamId: 5,
+            contentType: 'episode',
+            seriesXtreamId: 200,
+        };
+        expect(
+            buildTvPlaybackPositionPayload({
+                playlistId: 'p1',
+                nowPlaying,
+                positionSeconds: 10,
+                durationSeconds: null,
+            })
+        ).toEqual({
+            playlistId: 'p1',
+            contentXtreamId: 5,
+            contentType: 'episode',
+            positionSeconds: 10,
+            seriesXtreamId: 200,
         });
     });
 });

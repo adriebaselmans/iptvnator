@@ -1,4 +1,5 @@
 import type {
+    PlaybackPositionData,
     XtreamSerieDetails,
     XtreamSerieEpisode,
     XtreamVodDetails,
@@ -81,6 +82,58 @@ export function resolveTvDetailActionGating(
         canDownload: downloadsAvailable && target.hasPlayableSource,
         canMarkWatched: Boolean(target.durationSeconds),
         isWatched: isWatchedFn(target.xtreamId, target.contentType),
+    };
+}
+
+/**
+ * Identity of whatever is currently playing (§9, Phase 4 resume wiring). Set
+ * from Play/Resume and individual episode-row activation — deliberately
+ * separate from `TvDetailPlaybackTarget` (the top action row's quick-start
+ * suggestion), since a user can pick a specific episode row that differs from
+ * quick-start's resolved episode.
+ */
+export interface TvNowPlaying {
+    readonly xtreamId: number;
+    readonly contentType: 'vod' | 'episode';
+    readonly seriesXtreamId?: number;
+}
+
+/**
+ * The store's playback-position map key convention
+ * (`with-playback-positions.feature.ts`'s `getPositionKey`), applied here so
+ * resume lookups and saves cannot drift from it.
+ */
+function playbackPositionKey(nowPlaying: TvNowPlaying): string {
+    return `${nowPlaying.contentType}_${nowPlaying.xtreamId}`;
+}
+
+/** Seconds to seed the TV player at, from the store's loaded position map. */
+export function resolveTvResumeSeconds(
+    positions: ReadonlyMap<string, PlaybackPositionData>,
+    nowPlaying: TvNowPlaying | null
+): number {
+    if (!nowPlaying) return 0;
+    return positions.get(playbackPositionKey(nowPlaying))?.positionSeconds ?? 0;
+}
+
+/** Builds the row `XtreamStore.savePosition()` persists on playback progress. */
+export function buildTvPlaybackPositionPayload(params: {
+    readonly playlistId: string;
+    readonly nowPlaying: TvNowPlaying;
+    readonly positionSeconds: number;
+    readonly durationSeconds: number | null;
+}): PlaybackPositionData {
+    return {
+        playlistId: params.playlistId,
+        contentXtreamId: params.nowPlaying.xtreamId,
+        contentType: params.nowPlaying.contentType,
+        positionSeconds: params.positionSeconds,
+        ...(params.durationSeconds !== null
+            ? { durationSeconds: params.durationSeconds }
+            : {}),
+        ...(params.nowPlaying.seriesXtreamId !== undefined
+            ? { seriesXtreamId: params.nowPlaying.seriesXtreamId }
+            : {}),
     };
 }
 

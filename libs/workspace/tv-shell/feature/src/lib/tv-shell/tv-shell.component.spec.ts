@@ -2,6 +2,10 @@ import { Location } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
+import {
+    TvPlaybackSession,
+    TvPlaybackSessionService,
+} from '../playback/tv-playback-session.service';
 import { TvShellComponent } from './tv-shell.component';
 
 function dispatchKeydown(
@@ -111,4 +115,93 @@ describe('TvShellComponent', () => {
             expect(event.defaultPrevented).toBe(false);
         }
     );
+
+    describe('with a mounted playback session (§9.2)', () => {
+        function fakeSession(
+            overrides: Partial<TvPlaybackSession> = {}
+        ): TvPlaybackSession {
+            return {
+                controller: {
+                    capabilities: () => ({ seek: true } as never),
+                    state: () => ({ canSeek: true } as never),
+                    commands: {
+                        togglePlay: jest.fn(),
+                        seekBy: jest.fn(),
+                    } as never,
+                },
+                isLive: () => false,
+                reveal: jest.fn(),
+                onExit: jest.fn(),
+                ...overrides,
+            };
+        }
+
+        it('routes Enter to togglePlay and reveal instead of activation', () => {
+            const sessionService = TestBed.inject(TvPlaybackSessionService);
+            const session = fakeSession();
+            sessionService.register(session);
+
+            const event = dispatchKeydown(fixture, 'Enter');
+
+            expect(session.reveal).toHaveBeenCalledTimes(1);
+            expect(session.controller.commands.togglePlay).toHaveBeenCalledTimes(
+                1
+            );
+            expect(focusService.move).not.toHaveBeenCalled();
+            expect(event.defaultPrevented).toBe(true);
+        });
+
+        it('routes Left/Right to a gated seekBy', () => {
+            const sessionService = TestBed.inject(TvPlaybackSessionService);
+            const session = fakeSession();
+            sessionService.register(session);
+
+            dispatchKeydown(fixture, 'ArrowRight');
+
+            expect(session.controller.commands.seekBy).toHaveBeenCalledWith(10);
+        });
+
+        it('refuses to seek when the controller cannot currently seek', () => {
+            const sessionService = TestBed.inject(TvPlaybackSessionService);
+            const session = fakeSession({
+                controller: {
+                    capabilities: () => ({ seek: false } as never),
+                    state: () => ({ canSeek: false } as never),
+                    commands: { togglePlay: jest.fn(), seekBy: jest.fn() } as never,
+                },
+            });
+            sessionService.register(session);
+
+            dispatchKeydown(fixture, 'ArrowRight');
+
+            expect(session.controller.commands.seekBy).not.toHaveBeenCalled();
+        });
+
+        it('routes Backspace/Escape to onExit instead of Location.back()', () => {
+            const sessionService = TestBed.inject(TvPlaybackSessionService);
+            const session = fakeSession();
+            sessionService.register(session);
+
+            dispatchKeydown(fixture, 'Backspace');
+
+            expect(session.onExit).toHaveBeenCalledTimes(1);
+            expect(locationBackSpy).not.toHaveBeenCalled();
+        });
+
+        it('routes Up/Down to onChannelChange during live playback', () => {
+            const sessionService = TestBed.inject(TvPlaybackSessionService);
+            const onChannelChange = jest.fn();
+            const session = fakeSession({
+                isLive: () => true,
+                onChannelChange,
+            });
+            sessionService.register(session);
+
+            dispatchKeydown(fixture, 'ArrowUp');
+            dispatchKeydown(fixture, 'ArrowDown');
+
+            expect(onChannelChange).toHaveBeenNthCalledWith(1, 'up');
+            expect(onChannelChange).toHaveBeenNthCalledWith(2, 'down');
+        });
+    });
 });

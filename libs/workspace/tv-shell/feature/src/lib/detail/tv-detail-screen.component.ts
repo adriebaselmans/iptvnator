@@ -20,6 +20,7 @@ import {
     resetHostConnectivityGuard,
 } from '@iptvnator/services';
 import { getXtreamVodInfo } from '@iptvnator/shared/interfaces';
+import type { PlayerMediaTitle } from '@iptvnator/ui/playback';
 import {
     TvCatalogStateComponent,
     TvDetailActionRowComponent,
@@ -29,9 +30,13 @@ import {
     type TvEpisodeRowItem,
 } from '@iptvnator/workspace/tv-shell/ui';
 import { TvPlaylistSessionService } from '../session/tv-playlist-session.service';
+import { TvPlaybackOverlayComponent } from '../playback/tv-playback-overlay.component';
 import {
     buildTvEpisodeDownloadPayload,
+    buildTvPlaybackPositionPayload,
     buildTvVodDownloadPayload,
+    resolveTvResumeSeconds,
+    type TvNowPlaying,
 } from './tv-detail-actions.util';
 import { buildTvDetailState } from './tv-detail-screen-state';
 import {
@@ -70,6 +75,7 @@ const RETRY_GROUP_ID = 'tv-detail-state-retry';
         TvDetailActionRowComponent,
         TvSeasonTabsComponent,
         TvEpisodeRowComponent,
+        TvPlaybackOverlayComponent,
     ],
     templateUrl: './tv-detail-screen.component.html',
     styleUrl: './tv-detail-screen.component.scss',
@@ -112,7 +118,19 @@ export class TvDetailScreenComponent {
     private readonly isBootstrapping = signal(false);
     private readonly bootstrapFailed = signal(false);
     private readonly manualSeasonKey = signal<string | null>(null);
+    private readonly nowPlaying = signal<TvNowPlaying | null>(null);
     private lastInitKey: string | null = null;
+
+    protected readonly isPlaying = computed(() => this.nowPlaying() !== null);
+    protected readonly playbackResumeSeconds = computed(() =>
+        resolveTvResumeSeconds(this.store.playbackPositions(), this.nowPlaying())
+    );
+    protected readonly playbackMediaTitle = computed<PlayerMediaTitle | null>(
+        () => {
+            const title = this.viewModel().title;
+            return title ? { primary: title } : null;
+        }
+    );
 
     protected readonly isFavorite = this.store.isFavorite;
     protected readonly isLoading = computed(
@@ -159,21 +177,58 @@ export class TvDetailScreenComponent {
             .selectedSeasonEpisodes()
             .find((candidate) => Number(candidate.id) === item.id);
         if (!episode) return;
-        // Phase 4 seam: resolves and records playback intent through the
-        // store exactly as the desktop detail does (constructEpisodeStreamUrl
-        // sets XtreamStore.streamUrl). TvPlayerControlsComponent mounts
-        // against that state in Phase 4 — no player is started here.
         this.store.constructEpisodeStreamUrl(episode);
+        this.nowPlaying.set({
+            xtreamId: Number(episode.id),
+            contentType: 'episode',
+            seriesXtreamId: this.state.itemIdNumeric(),
+        });
     }
 
     protected onPlayActivated(): void {
         if (this.routeType() === 'movie') {
             const item = this.movieItem();
-            if (item) this.store.constructVodStreamUrl(item); // Phase 4 seam
+            if (!item) return;
+            this.store.constructVodStreamUrl(item);
+            this.nowPlaying.set({
+                xtreamId: this.state.itemIdNumeric(),
+                contentType: 'vod',
+            });
             return;
         }
         const episode = this.state.quickStartEpisode();
-        if (episode) this.store.constructEpisodeStreamUrl(episode); // Phase 4 seam
+        if (!episode) return;
+        this.store.constructEpisodeStreamUrl(episode);
+        this.nowPlaying.set({
+            xtreamId: Number(episode.id),
+            contentType: 'episode',
+            seriesXtreamId: this.state.itemIdNumeric(),
+        });
+    }
+
+    /** `TvPlaybackOverlayComponent` reports progress on an interval (§9). */
+    protected onPlaybackProgress(progress: {
+        positionSeconds: number;
+        durationSeconds: number | null;
+    }): void {
+        const playing = this.nowPlaying();
+        const playlist = this.store.currentPlaylist();
+        if (!playing || !playlist) return;
+        void this.store.savePosition(
+            playlist.id,
+            buildTvPlaybackPositionPayload({
+                playlistId: playlist.id,
+                nowPlaying: playing,
+                positionSeconds: progress.positionSeconds,
+                durationSeconds: progress.durationSeconds,
+            })
+        );
+    }
+
+    /** Back exits playback (§9.2) — closes the overlay, does not navigate. */
+    protected onPlaybackExited(): void {
+        this.nowPlaying.set(null);
+        this.store.resetPlayer();
     }
 
     protected onFavoriteToggled(): void {

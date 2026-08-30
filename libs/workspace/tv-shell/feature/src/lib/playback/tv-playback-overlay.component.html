@@ -1,0 +1,8 @@
+<video #video class="tv-playback-overlay__video" playsinline></video>
+<lib-tv-player-controls
+    [controller]="adapter"
+    [playerSurface]="playerSurface"
+    [isLive]="isLive()"
+    [mediaTitle]="mediaTitle()"
+    (exited)="exited.emit()"
+></lib-tv-player-controls>

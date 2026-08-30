@@ -31,6 +31,8 @@ interface FakeXtreamStore {
     toggleFavorite: jest.Mock;
     savePosition: jest.Mock;
     selectedContentType: ReturnType<typeof signal<string>>;
+    streamUrl: ReturnType<typeof signal<string | null>>;
+    resetPlayer: jest.Mock;
 }
 
 function createFakeStore(): FakeXtreamStore {
@@ -61,6 +63,8 @@ function createFakeStore(): FakeXtreamStore {
         toggleFavorite: jest.fn(),
         savePosition: jest.fn(() => Promise.resolve()),
         selectedContentType: signal('vod'),
+        streamUrl: signal<string | null>(null),
+        resetPlayer: jest.fn(),
     };
 }
 
@@ -239,6 +243,100 @@ describe('TvDetailScreenComponent', () => {
 
         fixture.componentInstance['onPlayActivated']();
         expect(store.constructVodStreamUrl).toHaveBeenCalledWith(item);
+    });
+
+    describe('playback overlay wiring (§9, Phase 4)', () => {
+        beforeEach(() => {
+            jest.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(
+                undefined
+            );
+            jest.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(
+                () => undefined
+            );
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('mounts the playback overlay honouring a stored resume position on Play', async () => {
+            const { fixture, store } = await setup({ type: 'movie', itemId: '100' });
+            store.selectedItem.set({
+                movie_data: { stream_id: 100, container_extension: 'mp4' },
+                info: { name: 'A Movie' },
+            });
+            store.playbackPositions.set(
+                new Map([
+                    [
+                        'vod_100',
+                        {
+                            contentXtreamId: 100,
+                            contentType: 'vod',
+                            positionSeconds: 321,
+                        },
+                    ],
+                ])
+            );
+            store.streamUrl.set('http://host/movie/100.mp4');
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            fixture.componentInstance['onPlayActivated']();
+            fixture.detectChanges();
+
+            const overlay = fixture.nativeElement.querySelector(
+                'lib-tv-playback-overlay'
+            );
+            expect(overlay).toBeTruthy();
+            expect(fixture.componentInstance['playbackResumeSeconds']()).toBe(321);
+        });
+
+        it('saves progress against the now-playing item', async () => {
+            const { fixture, store } = await setup({ type: 'movie', itemId: '100' });
+            store.selectedItem.set({
+                movie_data: { stream_id: 100, container_extension: 'mp4' },
+                info: { name: 'A Movie' },
+            });
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            fixture.componentInstance['onPlayActivated']();
+            fixture.componentInstance['onPlaybackProgress']({
+                positionSeconds: 42,
+                durationSeconds: 7200,
+            });
+
+            expect(store.savePosition).toHaveBeenCalledWith('p1', {
+                playlistId: 'p1',
+                contentXtreamId: 100,
+                contentType: 'vod',
+                positionSeconds: 42,
+                durationSeconds: 7200,
+            });
+        });
+
+        it('closes the overlay and resets the store player on exit', async () => {
+            const { fixture, store } = await setup({ type: 'movie', itemId: '100' });
+            store.selectedItem.set({
+                movie_data: { stream_id: 100, container_extension: 'mp4' },
+                info: { name: 'A Movie' },
+            });
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            fixture.componentInstance['onPlayActivated']();
+            fixture.detectChanges();
+            expect(fixture.componentInstance['isPlaying']()).toBe(true);
+
+            fixture.componentInstance['onPlaybackExited']();
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance['isPlaying']()).toBe(false);
+            expect(store.resetPlayer).toHaveBeenCalledTimes(1);
+        });
     });
 
     it('renders season tabs and an episode row for series, auto-selecting a season', async () => {

@@ -65,3 +65,12 @@
         />
     }
 }
+@if (isPlaying()) {
+    <lib-tv-playback-overlay
+        [streamUrl]="store.streamUrl() ?? ''"
+        [resumeSeconds]="playbackResumeSeconds()"
+        [mediaTitle]="playbackMediaTitle()"
+        (playbackProgress)="onPlaybackProgress($event)"
+        (exited)="onPlaybackExited()"
+    />
+}
