@@ -1675,6 +1675,10 @@
             "MARK_WATCHED": "Mark watched",
             "MARK_UNWATCHED": "Mark unwatched",
             "SEASON": "Season {{number}}"
+        },
+        "PLAYBACK": {
+            "ENGINE_FRAME_COPY": "Embedded MPV (frame-copy)",
+            "ENGINE_WEB": "Web player"
         }
     }
 }

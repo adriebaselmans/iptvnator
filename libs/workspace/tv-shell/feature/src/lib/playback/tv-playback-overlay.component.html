@@ -1,8 +1,20 @@
-<video #video class="tv-playback-overlay__video" playsinline></video>
-<lib-tv-player-controls
-    [controller]="adapter"
-    [playerSurface]="playerSurface"
-    [isLive]="isLive()"
-    [mediaTitle]="mediaTitle()"
-    (exited)="exited.emit()"
-></lib-tv-player-controls>
+@if (isFrameCopyEngine()) {
+    <lib-tv-frame-copy-engine
+        [streamUrl]="streamUrl()"
+        [resumeSeconds]="resumeSeconds()"
+        [isLive]="isLive()"
+        [mediaTitle]="mediaTitle()"
+        (playbackProgress)="onPlaybackProgress($event)"
+        (exited)="onExited()"
+    ></lib-tv-frame-copy-engine>
+} @else {
+    <lib-tv-web-engine
+        [streamUrl]="streamUrl()"
+        [resumeSeconds]="resumeSeconds()"
+        [isLive]="isLive()"
+        [mediaTitle]="mediaTitle()"
+        (playbackProgress)="onPlaybackProgress($event)"
+        (exited)="onExited()"
+    ></lib-tv-web-engine>
+}
+<span class="tv-playback-overlay__engine-badge">{{ engineLabelKey() | translate }}</span>

@@ -1,0 +1,14 @@
+<app-html-video-player
+    [channel]="channel()"
+    [startTime]="resumeSeconds()"
+    [isLive]="isLive()"
+    [interactionEnabled]="false"
+    [mediaTitle]="mediaTitle()"
+></app-html-video-player>
+<lib-tv-player-controls
+    [controller]="htmlPlayer().controlsAdapter"
+    [playerSurface]="playerSurface()"
+    [isLive]="isLive()"
+    [mediaTitle]="mediaTitle()"
+    (exited)="exited.emit()"
+></lib-tv-player-controls>

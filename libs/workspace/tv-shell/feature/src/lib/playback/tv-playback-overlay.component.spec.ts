@@ -1,75 +1,220 @@
+import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
+import type { PlayerMediaTitle } from '@iptvnator/ui/playback';
 import { TvPlaybackOverlayComponent } from './tv-playback-overlay.component';
-import { TvPlayerControlsComponent } from './tv-player-controls.component';
+
+/**
+ * `TvFrameCopyEngineComponent`/`TvWebEngineComponent` mount full real player
+ * engines (hls.js/mpegts.js, or the Embedded MPV IPC session) — each has its
+ * own dedicated spec. This spec only cares which one `TvPlaybackOverlayComponent`
+ * picks, so both are stubbed out by selector.
+ */
+@Component({
+    selector: 'lib-tv-frame-copy-engine',
+    template: '',
+})
+class StubFrameCopyEngineComponent {
+    readonly streamUrl = input.required<string>();
+    readonly resumeSeconds = input(0);
+    readonly isLive = input(false);
+    readonly mediaTitle = input<PlayerMediaTitle | null>(null);
+    readonly playbackProgress = output<{
+        positionSeconds: number;
+        durationSeconds: number | null;
+    }>();
+    readonly exited = output<void>();
+}
+
+@Component({
+    selector: 'lib-tv-web-engine',
+    template: '',
+})
+class StubWebEngineComponent {
+    readonly streamUrl = input.required<string>();
+    readonly resumeSeconds = input(0);
+    readonly isLive = input(false);
+    readonly mediaTitle = input<PlayerMediaTitle | null>(null);
+    readonly playbackProgress = output<{
+        positionSeconds: number;
+        durationSeconds: number | null;
+    }>();
+    readonly exited = output<void>();
+}
 
 describe('TvPlaybackOverlayComponent', () => {
     let fixture: ComponentFixture<TvPlaybackOverlayComponent>;
-    let playSpy: jest.SpyInstance;
+    let electron: { getEmbeddedMpvSupport: jest.Mock } | undefined;
 
     beforeEach(async () => {
-        playSpy = jest
-            .spyOn(HTMLMediaElement.prototype, 'play')
-            .mockResolvedValue(undefined);
-        jest.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(
-            () => undefined
-        );
+        electron = undefined;
+        Object.defineProperty(window, 'electron', {
+            configurable: true,
+            get: () => electron,
+        });
 
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [TvPlaybackOverlayComponent, TranslateModule.forRoot()],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(TvPlaybackOverlayComponent);
+        });
+        TestBed.overrideComponent(TvPlaybackOverlayComponent, {
+            set: {
+                imports: [
+                    TranslateModule,
+                    StubFrameCopyEngineComponent,
+                    StubWebEngineComponent,
+                ],
+            },
+        });
+        await TestBed.compileComponents();
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    function video(): HTMLVideoElement {
-        return fixture.nativeElement.querySelector('video');
+    /**
+     * `TvPlaybackOverlayComponent` reads `window.electron` synchronously in
+     * its constructor, so `electron` must be set BEFORE the fixture is
+     * created — assigning it inside the `it()` body after an earlier
+     * `TestBed.createComponent()` call would be too late.
+     */
+    function createFixture(): void {
+        fixture = TestBed.createComponent(TvPlaybackOverlayComponent);
+        fixture.componentRef.setInput('streamUrl', 'http://host/movie/1.mkv');
     }
 
-    it('sets the video source and starts playback once a stream URL is set', () => {
-        fixture.componentRef.setInput('streamUrl', 'http://host/movie/1.mp4');
+    /**
+     * Waits out the probe's promise chain. `fixture.whenStable()` relies on
+     * NgZone task tracking, which this project's zoneless TestBed
+     * configuration does not provide — a macrotask tick reliably drains the
+     * microtask queue (including the async probe's `await` chain)
+     * regardless of zone tracking.
+     */
+    function flushProbe(): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve));
+    }
+
+    it('starts on the web engine so there is never a dead screen while the probe is in flight', () => {
+        createFixture();
         fixture.detectChanges();
 
-        expect(video().src).toContain('/movie/1.mp4');
-        expect(playSpy).toHaveBeenCalled();
+        expect(
+            fixture.debugElement.query(By.directive(StubWebEngineComponent))
+        ).toBeTruthy();
+        expect(
+            fixture.debugElement.query(By.directive(StubFrameCopyEngineComponent))
+        ).toBeFalsy();
     });
 
-    it('seeds the resume position once metadata is available', () => {
-        fixture.componentRef.setInput('streamUrl', 'http://host/movie/1.mp4');
-        fixture.componentRef.setInput('resumeSeconds', 120);
+    it('switches to the frame-copy engine once the runtime probe confirms availability', async () => {
+        electron = {
+            getEmbeddedMpvSupport: jest.fn(() =>
+                Promise.resolve({
+                    supported: true,
+                    platform: 'linux',
+                    engine: 'frame-copy',
+                })
+            ),
+        };
+        createFixture();
+        fixture.detectChanges();
+        await flushProbe();
         fixture.detectChanges();
 
-        video().dispatchEvent(new Event('loadedmetadata'));
-
-        expect(video().currentTime).toBe(120);
+        expect(
+            fixture.debugElement.query(By.directive(StubFrameCopyEngineComponent))
+        ).toBeTruthy();
+        expect(
+            fixture.debugElement.query(By.directive(StubWebEngineComponent))
+        ).toBeFalsy();
     });
 
-    it('does not seed a resume position when none is stored', () => {
-        fixture.componentRef.setInput('streamUrl', 'http://host/movie/1.mp4');
-        fixture.componentRef.setInput('resumeSeconds', 0);
+    it('falls through to the web engine when the probe reports native-view only', async () => {
+        electron = {
+            getEmbeddedMpvSupport: jest.fn(() =>
+                Promise.resolve({
+                    supported: true,
+                    platform: 'darwin',
+                    engine: 'native',
+                })
+            ),
+        };
+        createFixture();
+        fixture.detectChanges();
+        await flushProbe();
         fixture.detectChanges();
 
-        video().dispatchEvent(new Event('loadedmetadata'));
-
-        expect(video().currentTime).toBe(0);
+        expect(
+            fixture.debugElement.query(By.directive(StubWebEngineComponent))
+        ).toBeTruthy();
     });
 
-    it('emits exited when the mounted controls report exit', () => {
-        fixture.componentRef.setInput('streamUrl', 'http://host/movie/1.mp4');
+    it('falls through to the web engine when the probe rejects', async () => {
+        electron = {
+            getEmbeddedMpvSupport: jest.fn(() =>
+                Promise.reject(new Error('ipc timeout'))
+            ),
+        };
+        createFixture();
         fixture.detectChanges();
+        await flushProbe();
+        fixture.detectChanges();
+
+        expect(
+            fixture.debugElement.query(By.directive(StubWebEngineComponent))
+        ).toBeTruthy();
+    });
+
+    it('forwards playback progress and exit from whichever engine is mounted', () => {
+        createFixture();
+        fixture.detectChanges();
+        const progress = jest.fn();
         const exited = jest.fn();
+        fixture.componentInstance.playbackProgress.subscribe(progress);
         fixture.componentInstance.exited.subscribe(exited);
 
-        const controls = fixture.debugElement.query(
-            By.directive(TvPlayerControlsComponent)
-        ).componentInstance as TvPlayerControlsComponent;
-        controls.exited.emit();
+        const stub = fixture.debugElement.query(
+            By.directive(StubWebEngineComponent)
+        ).componentInstance as StubWebEngineComponent;
+        stub.playbackProgress.emit({ positionSeconds: 5, durationSeconds: 100 });
+        stub.exited.emit();
 
+        expect(progress).toHaveBeenCalledWith({
+            positionSeconds: 5,
+            durationSeconds: 100,
+        });
         expect(exited).toHaveBeenCalledTimes(1);
+    });
+
+    it('surfaces the resolved engine in the badge', async () => {
+        electron = {
+            getEmbeddedMpvSupport: jest.fn(() =>
+                Promise.resolve({
+                    supported: true,
+                    platform: 'linux',
+                    engine: 'frame-copy',
+                })
+            ),
+        };
+        createFixture();
+        fixture.detectChanges();
+        await flushProbe();
+        fixture.detectChanges();
+
+        const badge = fixture.nativeElement.querySelector(
+            '.tv-playback-overlay__engine-badge'
+        );
+        expect(badge.textContent).toContain('TV.PLAYBACK.ENGINE_FRAME_COPY');
+    });
+
+    it('shows the web engine label while unresolved', () => {
+        createFixture();
+        fixture.detectChanges();
+
+        const badge = fixture.nativeElement.querySelector(
+            '.tv-playback-overlay__engine-badge'
+        );
+        expect(badge.textContent).toContain('TV.PLAYBACK.ENGINE_WEB');
     });
 });

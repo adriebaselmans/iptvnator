@@ -1,0 +1,13 @@
+<app-embedded-mpv-player
+    [playback]="playback()"
+    [showControls]="false"
+    [mediaTitle]="mediaTitle()"
+    (timeUpdate)="onTimeUpdate($event)"
+></app-embedded-mpv-player>
+<lib-tv-player-controls
+    [controller]="mpvPlayer().sharedControls"
+    [playerSurface]="mpvPlayer().playerSurface()"
+    [isLive]="isLive()"
+    [mediaTitle]="mediaTitle()"
+    (exited)="exited.emit()"
+></lib-tv-player-controls>
