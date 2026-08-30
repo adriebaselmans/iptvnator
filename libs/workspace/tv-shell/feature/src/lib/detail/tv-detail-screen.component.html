@@ -1,0 +1,67 @@
+@if (hasError()) {
+    <lib-tv-catalog-state
+        variant="error"
+        [title]="'TV.DETAIL.ERROR_TITLE' | translate"
+        [description]="'TV.DETAIL.ERROR_DESCRIPTION' | translate"
+        [retryLabel]="'TV.DETAIL.RETRY' | translate"
+        [retryGroupId]="retryGroupId"
+        (retry)="onRetry()"
+    />
+} @else if (isLoading()) {
+    <lib-tv-catalog-state
+        variant="loading"
+        [title]="'TV.DETAIL.LOADING' | translate"
+    />
+} @else if (isEmpty()) {
+    <lib-tv-catalog-state
+        variant="empty"
+        [title]="'TV.DETAIL.EMPTY_TITLE' | translate"
+        [description]="'TV.DETAIL.EMPTY_DESCRIPTION' | translate"
+    />
+} @else {
+    <lib-tv-detail-hero
+        [title]="viewModel().title"
+        [plot]="viewModel().plot"
+        [posterUrl]="viewModel().posterUrl"
+        [backdropUrl]="viewModel().backdropUrl"
+        [chips]="viewModel().chips"
+    />
+    <lib-tv-detail-action-row
+        [tvFocusGroup]="heroActionsGroupId"
+        [neighbours]="actionsNeighbours"
+        [canPlay]="actionGating().canPlay"
+        [playLabel]="(actionGating().isResume ? 'TV.DETAIL.RESUME' : 'TV.DETAIL.PLAY') | translate"
+        [canFavorite]="true"
+        [favoriteLabel]="'TV.DETAIL.FAVORITE' | translate"
+        [isFavorite]="isFavorite()"
+        [canDownload]="actionGating().canDownload"
+        [downloadLabel]="'TV.DETAIL.DOWNLOAD' | translate"
+        [canMarkWatched]="actionGating().canMarkWatched"
+        [markWatchedLabel]="
+            (actionGating().isWatched
+                ? 'TV.DETAIL.MARK_UNWATCHED'
+                : 'TV.DETAIL.MARK_WATCHED'
+            ) | translate
+        "
+        [isWatched]="actionGating().isWatched"
+        (playActivated)="onPlayActivated()"
+        (favoriteToggled)="onFavoriteToggled()"
+        (downloadActivated)="onDownloadActivated()"
+        (markWatchedToggled)="onMarkWatchedToggled()"
+    />
+    @if (routeType() === 'series' && seasonTabs().length > 0) {
+        <lib-tv-season-tabs
+            [tvFocusGroup]="seasonTabsGroupId"
+            [neighbours]="seasonsNeighbours"
+            [seasons]="seasonTabs()"
+            [selectedKey]="selectedSeasonKey()"
+            (seasonSelected)="onSeasonSelected($event)"
+        />
+        <lib-tv-episode-row
+            [tvFocusGroup]="episodeRowGroupId"
+            [neighbours]="episodesNeighbours"
+            [episodes]="episodeItems()"
+            (episodeActivated)="onEpisodeActivated($event)"
+        />
+    }
+}

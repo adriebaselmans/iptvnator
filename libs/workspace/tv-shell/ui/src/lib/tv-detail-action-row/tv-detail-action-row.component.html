@@ -1,0 +1,42 @@
+@if (canPlay()) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-detail-action-row__button tv-detail-action-row__button--primary"
+        (click)="playActivated.emit()"
+    >
+        {{ playLabel() }}
+    </button>
+}
+@if (canFavorite()) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-detail-action-row__button"
+        [class.tv-detail-action-row__button--active]="isFavorite()"
+        (click)="favoriteToggled.emit()"
+    >
+        {{ favoriteLabel() }}
+    </button>
+}
+@if (canDownload()) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-detail-action-row__button"
+        (click)="downloadActivated.emit()"
+    >
+        {{ downloadLabel() }}
+    </button>
+}
+@if (canMarkWatched()) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-detail-action-row__button"
+        [class.tv-detail-action-row__button--active]="isWatched()"
+        (click)="markWatchedToggled.emit()"
+    >
+        {{ markWatchedLabel() }}
+    </button>
+}

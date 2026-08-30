@@ -1,0 +1,28 @@
+@if (backdropUrl(); as backdrop) {
+    <img
+        class="tv-detail-hero__backdrop"
+        [src]="backdrop"
+        alt=""
+        aria-hidden="true"
+    />
+}
+<div class="tv-detail-hero__scrim" aria-hidden="true"></div>
+
+<div class="tv-detail-hero__content">
+    @if (posterUrl(); as poster) {
+        <img class="tv-detail-hero__poster" [src]="poster" [alt]="title()" />
+    }
+    <div class="tv-detail-hero__text">
+        <h1 class="tv-detail-hero__title">{{ title() }}</h1>
+        @if (chips().length > 0) {
+            <div class="tv-detail-hero__chips">
+                @for (chip of chips(); track chip.label) {
+                    <span class="tv-detail-hero__chip">{{ chip.label }}</span>
+                }
+            </div>
+        }
+        @if (plot()) {
+            <p class="tv-detail-hero__plot">{{ plot() }}</p>
+        }
+    </div>
+</div>

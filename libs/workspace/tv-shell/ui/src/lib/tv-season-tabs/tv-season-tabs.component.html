@@ -1,0 +1,11 @@
+@for (season of seasons(); track season.key) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-season-tabs__item"
+        [class.tv-season-tabs__item--active]="season.key === selectedKey()"
+        (click)="seasonSelected.emit(season.key)"
+    >
+        {{ 'TV.DETAIL.SEASON' | translate: { number: season.key } }}
+    </button>
+}

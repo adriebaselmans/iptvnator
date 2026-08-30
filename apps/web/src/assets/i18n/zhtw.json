@@ -1660,6 +1660,21 @@
             "ERROR_TITLE": "Could not load this catalogue",
             "ERROR_DESCRIPTION": "Check the connection to your source and try again.",
             "RETRY": "Retry"
+        },
+        "DETAIL": {
+            "LOADING": "Loading…",
+            "ERROR_TITLE": "Could not load this title",
+            "ERROR_DESCRIPTION": "Check the connection to your source and try again.",
+            "RETRY": "Retry",
+            "EMPTY_TITLE": "Nothing here",
+            "EMPTY_DESCRIPTION": "This title could not be found.",
+            "PLAY": "Play",
+            "RESUME": "Resume",
+            "FAVORITE": "Favorite",
+            "DOWNLOAD": "Download",
+            "MARK_WATCHED": "Mark watched",
+            "MARK_UNWATCHED": "Mark unwatched",
+            "SEASON": "Season {{number}}"
         }
     }
 }

@@ -1,0 +1,22 @@
+@for (episode of episodes(); track episode.id) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-episode-row__item"
+        [class.tv-episode-row__item--watched]="episode.watched"
+        (click)="episodeActivated.emit(episode)"
+    >
+        <div class="tv-episode-row__still">
+            @if (episode.stillUrl) {
+                <img
+                    class="tv-episode-row__still-image"
+                    [src]="episode.stillUrl"
+                    alt=""
+                    loading="lazy"
+                />
+            }
+            <span class="tv-episode-row__number">{{ episode.episodeNumber }}</span>
+        </div>
+        <span class="tv-episode-row__title">{{ episode.title }}</span>
+    </button>
+}

@@ -3,3 +3,7 @@ export * from './lib/tv-category-rail/tv-category-rail.component';
 export * from './lib/tv-poster-grid/tv-poster-grid.component';
 export * from './lib/tv-poster-grid/tv-grid-columns.util';
 export * from './lib/tv-catalog-state/tv-catalog-state.component';
+export * from './lib/tv-detail-hero/tv-detail-hero.component';
+export * from './lib/tv-detail-action-row/tv-detail-action-row.component';
+export * from './lib/tv-season-tabs/tv-season-tabs.component';
+export * from './lib/tv-episode-row/tv-episode-row.component';
