@@ -138,4 +138,37 @@ describe('TvWebEngineComponent', () => {
 
         expect(exited).toHaveBeenCalledTimes(1);
     });
+
+    it('forwards channel/overlay events from the mounted controls (§7.3)', () => {
+        fixture.componentRef.setInput('streamUrl', 'http://host/live/1.m3u8');
+        fixture.detectChanges();
+        const channelChange = jest.fn();
+        const openChannelBar = jest.fn();
+        const overlayBack = jest.fn();
+        fixture.componentInstance.channelChangeRequested.subscribe(channelChange);
+        fixture.componentInstance.openChannelBarRequested.subscribe(openChannelBar);
+        fixture.componentInstance.overlayBackRequested.subscribe(overlayBack);
+
+        const controls = fixture.debugElement.query(
+            By.directive(TvPlayerControlsComponent)
+        ).componentInstance as TvPlayerControlsComponent;
+        controls.channelChangeRequested.emit('down');
+        controls.openChannelBarRequested.emit();
+        controls.overlayBackRequested.emit();
+
+        expect(channelChange).toHaveBeenCalledWith('down');
+        expect(openChannelBar).toHaveBeenCalledTimes(1);
+        expect(overlayBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards isOverlayActive down to the mounted controls', () => {
+        fixture.componentRef.setInput('streamUrl', 'http://host/live/1.m3u8');
+        fixture.componentRef.setInput('isOverlayActive', true);
+        fixture.detectChanges();
+
+        const controls = fixture.debugElement.query(
+            By.directive(TvPlayerControlsComponent)
+        ).componentInstance as TvPlayerControlsComponent;
+        expect(controls.isOverlayActive()).toBe(true);
+    });
 });

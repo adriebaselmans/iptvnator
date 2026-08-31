@@ -84,6 +84,31 @@ describe('TvPlayerControlsComponent', () => {
         expect(channelChange).toHaveBeenCalledWith('up');
     });
 
+    it('emits openChannelBarRequested when the session reports it (§7.3)', () => {
+        const openChannelBar = jest.fn();
+        fixture.componentInstance.openChannelBarRequested.subscribe(openChannelBar);
+
+        sessionService.active()?.onOpenChannelBar?.();
+
+        expect(openChannelBar).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports isOverlayActive through the registered session', () => {
+        fixture.componentRef.setInput('isOverlayActive', true);
+        fixture.detectChanges();
+
+        expect(sessionService.active()?.isOverlayActive?.()).toBe(true);
+    });
+
+    it('emits overlayBackRequested when the session reports it', () => {
+        const overlayBack = jest.fn();
+        fixture.componentInstance.overlayBackRequested.subscribe(overlayBack);
+
+        sessionService.active()?.onOverlayBack?.();
+
+        expect(overlayBack).toHaveBeenCalledTimes(1);
+    });
+
     it('unregisters the session on destroy', () => {
         fixture.destroy();
 

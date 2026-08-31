@@ -20,10 +20,14 @@ class StubFrameCopyEngineComponent {
     readonly resumeSeconds = input(0);
     readonly isLive = input(false);
     readonly mediaTitle = input<PlayerMediaTitle | null>(null);
+    readonly isOverlayActive = input(false);
     readonly playbackProgress = output<{
         positionSeconds: number;
         durationSeconds: number | null;
     }>();
+    readonly channelChangeRequested = output<'up' | 'down'>();
+    readonly openChannelBarRequested = output<void>();
+    readonly overlayBackRequested = output<void>();
     readonly exited = output<void>();
 }
 
@@ -36,10 +40,14 @@ class StubWebEngineComponent {
     readonly resumeSeconds = input(0);
     readonly isLive = input(false);
     readonly mediaTitle = input<PlayerMediaTitle | null>(null);
+    readonly isOverlayActive = input(false);
     readonly playbackProgress = output<{
         positionSeconds: number;
         durationSeconds: number | null;
     }>();
+    readonly channelChangeRequested = output<'up' | 'down'>();
+    readonly openChannelBarRequested = output<void>();
+    readonly overlayBackRequested = output<void>();
     readonly exited = output<void>();
 }
 
@@ -185,6 +193,39 @@ describe('TvPlaybackOverlayComponent', () => {
             durationSeconds: 100,
         });
         expect(exited).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards channel/overlay events from whichever engine is mounted (§7.3)', () => {
+        createFixture();
+        fixture.detectChanges();
+        const channelChange = jest.fn();
+        const openChannelBar = jest.fn();
+        const overlayBack = jest.fn();
+        fixture.componentInstance.channelChangeRequested.subscribe(channelChange);
+        fixture.componentInstance.openChannelBarRequested.subscribe(openChannelBar);
+        fixture.componentInstance.overlayBackRequested.subscribe(overlayBack);
+
+        const stub = fixture.debugElement.query(
+            By.directive(StubWebEngineComponent)
+        ).componentInstance as StubWebEngineComponent;
+        stub.channelChangeRequested.emit('up');
+        stub.openChannelBarRequested.emit();
+        stub.overlayBackRequested.emit();
+
+        expect(channelChange).toHaveBeenCalledWith('up');
+        expect(openChannelBar).toHaveBeenCalledTimes(1);
+        expect(overlayBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards isOverlayActive down to the mounted engine', () => {
+        createFixture();
+        fixture.componentRef.setInput('isOverlayActive', true);
+        fixture.detectChanges();
+
+        const stub = fixture.debugElement.query(
+            By.directive(StubWebEngineComponent)
+        ).componentInstance as StubWebEngineComponent;
+        expect(stub.isOverlayActive()).toBe(true);
     });
 
     it('surfaces the resolved engine in the badge', async () => {

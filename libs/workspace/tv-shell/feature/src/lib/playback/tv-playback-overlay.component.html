@@ -4,7 +4,11 @@
         [resumeSeconds]="resumeSeconds()"
         [isLive]="isLive()"
         [mediaTitle]="mediaTitle()"
+        [isOverlayActive]="isOverlayActive()"
         (playbackProgress)="onPlaybackProgress($event)"
+        (channelChangeRequested)="onChannelChangeRequested($event)"
+        (openChannelBarRequested)="onOpenChannelBarRequested()"
+        (overlayBackRequested)="onOverlayBackRequested()"
         (exited)="onExited()"
     ></lib-tv-frame-copy-engine>
 } @else {
@@ -13,7 +17,11 @@
         [resumeSeconds]="resumeSeconds()"
         [isLive]="isLive()"
         [mediaTitle]="mediaTitle()"
+        [isOverlayActive]="isOverlayActive()"
         (playbackProgress)="onPlaybackProgress($event)"
+        (channelChangeRequested)="onChannelChangeRequested($event)"
+        (openChannelBarRequested)="onOpenChannelBarRequested()"
+        (overlayBackRequested)="onOverlayBackRequested()"
         (exited)="onExited()"
     ></lib-tv-web-engine>
 }

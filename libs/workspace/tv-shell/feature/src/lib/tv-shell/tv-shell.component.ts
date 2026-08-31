@@ -39,7 +39,7 @@ export class TvShellComponent {
     @HostListener('keydown', ['$event'])
     onKeydown(event: KeyboardEvent): void {
         const session = this.playbackSession.active();
-        if (session) {
+        if (session && !session.isOverlayActive?.()) {
             this.handlePlaybackKey(event, session);
             return;
         }
@@ -59,7 +59,15 @@ export class TvShellComponent {
                 this.activateFocusedElement();
                 break;
             case 'back':
-                this.goBack();
+                // While a session-owned overlay (channel bar, category
+                // column, EPG grid) has claimed the key stream, Back closes
+                // it instead of popping route navigation (§7.3 "Back
+                // closes").
+                if (session) {
+                    session.onOverlayBack?.();
+                } else {
+                    this.goBack();
+                }
                 break;
         }
     }
@@ -101,6 +109,9 @@ export class TvShellComponent {
                 break;
             case 'channel':
                 session.onChannelChange?.(intent.direction);
+                break;
+            case 'open-channel-bar':
+                session.onOpenChannelBar?.();
                 break;
             case 'exit':
                 session.onExit();

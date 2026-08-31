@@ -1,0 +1,75 @@
+:host {
+    display: block;
+    position: relative;
+    height: 100%;
+    width: 100%;
+    min-width: 0;
+    background: #000;
+}
+
+lib-tv-playback-overlay {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.tv-live-screen__overlay {
+    position: absolute;
+    inset: auto 0 0 0;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 55%;
+    max-height: 32rem;
+    padding: 1.5rem;
+    gap: 0.75rem;
+    box-sizing: border-box;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.85) 0%,
+        rgba(0, 0, 0, 0.55) 70%,
+        transparent 100%
+    );
+
+    /* Always mounted (so focus groups register up front — see the template
+       comment) but hidden and non-interactive until OK opens it. */
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.tv-live-screen__overlay--visible {
+    visibility: visible;
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.tv-live-screen__category-column {
+    flex: 0 0 0;
+    width: 0;
+    overflow: hidden;
+    transition: width 150ms ease;
+}
+
+.tv-live-screen__category-column--visible {
+    flex-basis: 16rem;
+    width: 16rem;
+}
+
+.tv-live-screen__channel-bar {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.tv-live-screen__epg-grid {
+    flex: 0 0 0;
+    width: 0;
+    overflow: hidden;
+    transition: width 150ms ease;
+}
+
+.tv-live-screen__epg-grid--visible {
+    flex-basis: 34rem;
+    width: 34rem;
+}

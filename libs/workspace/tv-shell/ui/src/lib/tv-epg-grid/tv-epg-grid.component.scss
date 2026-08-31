@@ -1,0 +1,79 @@
+:host {
+    display: block;
+    height: 100%;
+    max-height: 100%;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--app-widget-bg, rgba(20, 22, 30, 0.92));
+    border-radius: 0.75rem;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    /* Sole scroll owner for the grid; each row scrolls its own programmes
+       horizontally, independent of this vertical scroll. */
+}
+
+.tv-epg-grid__empty {
+    margin: 2rem;
+    color: var(--app-muted-color, #8891a4);
+    font-size: 1.05rem;
+}
+
+.tv-epg-grid__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tv-epg-grid__row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.tv-epg-grid__channel-name {
+    flex: 0 0 10rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--app-on-surface, #e6e1e5);
+    font-size: 1rem;
+}
+
+.tv-epg-grid__programmes {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding: 0.2rem 0;
+}
+
+.tv-epg-grid__cell {
+    flex-shrink: 0;
+    max-width: 16rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.4rem;
+    border: 2px solid transparent;
+    background: var(--app-separator, rgba(255, 255, 255, 0.08));
+    color: var(--app-on-surface, #e6e1e5);
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &.tv-focused {
+        border-color: var(--app-selection-color, #78adff);
+        box-shadow: 0 0 0 4px var(--app-selection-glow, rgba(120, 173, 255, 0.4));
+    }
+}
+
+.tv-epg-grid__cell--current {
+    background: var(--app-selection-surface, rgba(120, 173, 255, 0.18));
+    color: var(--app-selection-color, #78adff);
+}

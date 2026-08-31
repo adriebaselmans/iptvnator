@@ -1,12 +1,15 @@
 import { mapTvPlaybackKeyToIntent } from './tv-playback-key-intent.util';
 
 describe('mapTvPlaybackKeyToIntent', () => {
-    it('maps Enter to toggle-play regardless of live/VOD', () => {
+    it('maps Enter to toggle-play during VOD playback', () => {
         expect(mapTvPlaybackKeyToIntent('Enter', false)).toEqual({
             kind: 'toggle-play',
         });
+    });
+
+    it('maps Enter to open-channel-bar during live playback (§7.3)', () => {
         expect(mapTvPlaybackKeyToIntent('Enter', true)).toEqual({
-            kind: 'toggle-play',
+            kind: 'open-channel-bar',
         });
     });
 

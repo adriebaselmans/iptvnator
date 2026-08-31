@@ -7,3 +7,5 @@ export * from './lib/tv-detail-hero/tv-detail-hero.component';
 export * from './lib/tv-detail-action-row/tv-detail-action-row.component';
 export * from './lib/tv-season-tabs/tv-season-tabs.component';
 export * from './lib/tv-episode-row/tv-episode-row.component';
+export * from './lib/tv-channel-bar/tv-channel-bar.component';
+export * from './lib/tv-epg-grid/tv-epg-grid.component';

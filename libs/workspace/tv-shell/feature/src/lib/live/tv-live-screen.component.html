@@ -1,0 +1,74 @@
+@if (errorReason()) {
+    <lib-tv-catalog-state
+        variant="error"
+        [title]="'TV.LIVE.ERROR_TITLE' | translate"
+        [description]="'TV.LIVE.ERROR_DESCRIPTION' | translate"
+        [retryLabel]="'TV.LIVE.RETRY' | translate"
+        (retry)="onRetry()"
+    />
+} @else if (isLoading()) {
+    <lib-tv-catalog-state
+        variant="loading"
+        [title]="'TV.LIVE.LOADING' | translate"
+    />
+} @else if (isEmpty()) {
+    <lib-tv-catalog-state
+        variant="empty"
+        [title]="'TV.LIVE.EMPTY_TITLE' | translate"
+        [description]="'TV.LIVE.EMPTY_DESCRIPTION' | translate"
+    />
+} @else {
+    <lib-tv-playback-overlay
+        [streamUrl]="streamUrl()"
+        [isLive]="true"
+        [mediaTitle]="mediaTitle()"
+        [isOverlayActive]="overlayOpen()"
+        (channelChangeRequested)="onChannelChange($event)"
+        (openChannelBarRequested)="onOpenChannelBar()"
+        (overlayBackRequested)="onOverlayBack()"
+        (exited)="onExited()"
+    />
+
+    <!--
+      Always mounted (never behind an `@if`), so every pane's focus group is
+      registered from the first render — `onOpenChannelBar()` can then call
+      `TvFocusService.setActive()` synchronously instead of waiting a change
+      detection cycle for a newly-created view. Visibility is CSS-only,
+      driven by `overlayOpen()`/`showCategoryColumn()`/`showEpgGrid()`.
+    -->
+    <div
+        class="tv-live-screen__overlay"
+        [class.tv-live-screen__overlay--visible]="overlayOpen()"
+    >
+        <lib-tv-category-rail
+            class="tv-live-screen__category-column"
+            [class.tv-live-screen__category-column--visible]="showCategoryColumn()"
+            [tvFocusGroup]="categoryColumnGroupId"
+            orientation="column"
+            [neighbours]="categoryColumnNeighbours"
+            [categories]="categories()"
+            [selectedCategoryId]="selectedCategoryId()"
+            (categorySelected)="onCategorySelected($event)"
+        />
+        <lib-tv-channel-bar
+            class="tv-live-screen__channel-bar"
+            [tvFocusGroup]="channelBarGroupId"
+            orientation="column"
+            [neighbours]="channelBarNeighbours()"
+            [channels]="channelBarItems()"
+            [playingChannelId]="playingChannelId()"
+            [highlightedProgramme]="highlightedProgramme()"
+            [noProgrammeLabel]="'TV.LIVE.CHANNEL_BAR_NO_PROGRAMME' | translate"
+            (channelActivated)="onChannelBarActivated($event)"
+        />
+        <lib-tv-epg-grid
+            class="tv-live-screen__epg-grid"
+            [class.tv-live-screen__epg-grid--visible]="showEpgGrid()"
+            [rows]="epgGridRows()"
+            [emptyLabel]="'TV.LIVE.EPG_NO_DATA' | translate"
+            [groupIdPrefix]="epgRowGroupPrefix"
+            [leftNeighbourGroupId]="channelBarGroupId"
+            (programmeActivated)="onEpgRowActivated($event)"
+        />
+    </div>
+}

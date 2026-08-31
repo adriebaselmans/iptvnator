@@ -1,0 +1,32 @@
+@if (rows().length === 0) {
+    <p class="tv-epg-grid__empty">{{ emptyLabel() }}</p>
+} @else {
+    <div class="tv-epg-grid__rows">
+        @for (row of rows(); track trackByChannelId($index, row)) {
+            <div
+                class="tv-epg-grid__row"
+                [tvFocusGroup]="rowGroupId(row)"
+                orientation="row"
+                [neighbours]="rowNeighbours($index)"
+            >
+                <span class="tv-epg-grid__channel-name">{{ row.channelName }}</span>
+                <div class="tv-epg-grid__programmes">
+                    @for (
+                        programme of row.programmes;
+                        track trackByProgrammeId($index, programme)
+                    ) {
+                        <button
+                            type="button"
+                            tvFocusable
+                            class="tv-epg-grid__cell"
+                            [class.tv-epg-grid__cell--current]="programme.isCurrent"
+                            (click)="programmeActivated.emit(row)"
+                        >
+                            {{ programme.title }}
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

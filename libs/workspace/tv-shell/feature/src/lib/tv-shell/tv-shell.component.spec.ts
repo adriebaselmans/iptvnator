@@ -203,5 +203,53 @@ describe('TvShellComponent', () => {
             expect(onChannelChange).toHaveBeenNthCalledWith(1, 'up');
             expect(onChannelChange).toHaveBeenNthCalledWith(2, 'down');
         });
+
+        it('routes Enter to onOpenChannelBar instead of togglePlay during live playback (§7.3)', () => {
+            const sessionService = TestBed.inject(TvPlaybackSessionService);
+            const onOpenChannelBar = jest.fn();
+            const session = fakeSession({
+                isLive: () => true,
+                onOpenChannelBar,
+            });
+            sessionService.register(session);
+
+            dispatchKeydown(fixture, 'Enter');
+
+            expect(onOpenChannelBar).toHaveBeenCalledTimes(1);
+            expect(session.controller.commands.togglePlay).not.toHaveBeenCalled();
+        });
+
+        describe('while the session reports an active overlay (channel bar/EPG grid)', () => {
+            it('routes Up/Down/Enter through ordinary focus intents instead of playback intents', () => {
+                const sessionService = TestBed.inject(TvPlaybackSessionService);
+                const session = fakeSession({
+                    isLive: () => true,
+                    isOverlayActive: () => true,
+                });
+                sessionService.register(session);
+
+                dispatchKeydown(fixture, 'ArrowUp');
+
+                expect(focusService.move).toHaveBeenCalledWith('up');
+                expect(session.onChannelChange).toBeUndefined();
+            });
+
+            it('routes Back to onOverlayBack instead of onExit or Location.back()', () => {
+                const sessionService = TestBed.inject(TvPlaybackSessionService);
+                const onOverlayBack = jest.fn();
+                const session = fakeSession({
+                    isLive: () => true,
+                    isOverlayActive: () => true,
+                    onOverlayBack,
+                });
+                sessionService.register(session);
+
+                dispatchKeydown(fixture, 'Backspace');
+
+                expect(onOverlayBack).toHaveBeenCalledTimes(1);
+                expect(session.onExit).not.toHaveBeenCalled();
+                expect(locationBackSpy).not.toHaveBeenCalled();
+            });
+        });
     });
 });

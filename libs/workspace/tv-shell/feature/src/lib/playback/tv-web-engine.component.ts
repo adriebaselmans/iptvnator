@@ -52,11 +52,15 @@ export class TvWebEngineComponent {
     readonly resumeSeconds = input(0);
     readonly isLive = input(false);
     readonly mediaTitle = input<PlayerMediaTitle | null>(null);
+    readonly isOverlayActive = input(false);
 
     readonly playbackProgress = output<{
         positionSeconds: number;
         durationSeconds: number | null;
     }>();
+    readonly channelChangeRequested = output<'up' | 'down'>();
+    readonly openChannelBarRequested = output<void>();
+    readonly overlayBackRequested = output<void>();
     readonly exited = output<void>();
 
     protected readonly htmlPlayer = viewChild.required(HtmlVideoPlayerComponent);

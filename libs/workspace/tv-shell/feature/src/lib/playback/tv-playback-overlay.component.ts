@@ -43,11 +43,19 @@ export class TvPlaybackOverlayComponent {
     readonly resumeSeconds = input(0);
     readonly isLive = input(false);
     readonly mediaTitle = input<PlayerMediaTitle | null>(null);
+    /** True while the live screen's channel bar/category column/EPG grid is open (§7.3/§6.3). */
+    readonly isOverlayActive = input(false);
 
     readonly playbackProgress = output<{
         positionSeconds: number;
         durationSeconds: number | null;
     }>();
+    /** Live-only: Up/Down change channel directly (§7.3). */
+    readonly channelChangeRequested = output<'up' | 'down'>();
+    /** Live-only: OK requested the channel bar instead of toggling play/pause. */
+    readonly openChannelBarRequested = output<void>();
+    /** Closes whatever overlay is currently claiming the key stream. */
+    readonly overlayBackRequested = output<void>();
     readonly exited = output<void>();
 
     private readonly resolvedPlayer = signal<VideoPlayer>(
@@ -81,5 +89,17 @@ export class TvPlaybackOverlayComponent {
 
     protected onExited(): void {
         this.exited.emit();
+    }
+
+    protected onChannelChangeRequested(direction: 'up' | 'down'): void {
+        this.channelChangeRequested.emit(direction);
+    }
+
+    protected onOpenChannelBarRequested(): void {
+        this.openChannelBarRequested.emit();
+    }
+
+    protected onOverlayBackRequested(): void {
+        this.overlayBackRequested.emit();
     }
 }

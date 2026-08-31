@@ -13,9 +13,26 @@ export interface TvPlaybackSession {
     readonly isLive: () => boolean;
     /** Reveals the mounted `app-player-controls` bar (OK reveals controls). */
     readonly reveal: () => void;
-    /** Live-only; unset in this phase since no live screen exists yet (Phase 5). */
+    /** Live-only: Up/Down change channel directly (§7.3). */
     readonly onChannelChange?: (direction: 'up' | 'down') => void;
     readonly onExit: () => void;
+    /**
+     * Live-only: OK opens the channel bar instead of toggling play/pause
+     * (§7.3). Unset for VOD sessions, where OK keeps its §9.2 meaning.
+     */
+    readonly onOpenChannelBar?: () => void;
+    /**
+     * True while a shell-owned overlay the session mounted (channel bar,
+     * category column, EPG grid) has claimed the key stream (§6.3: "Overlays
+     * and modals claim the intent stream while open"). While true, the
+     * shell routes keys through ordinary focus intents (move/activate)
+     * instead of playback intents, and Back closes the overlay via
+     * `onOverlayBack` instead of exiting playback. Absent/false for sessions
+     * with no such overlay (VOD).
+     */
+    readonly isOverlayActive?: () => boolean;
+    /** Closes the currently open overlay (§7.3 "Back closes"). */
+    readonly onOverlayBack?: () => void;
 }
 
 /**

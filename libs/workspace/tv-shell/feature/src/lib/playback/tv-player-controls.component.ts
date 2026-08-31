@@ -41,9 +41,14 @@ export class TvPlayerControlsComponent {
     readonly playerSurface = input<HTMLElement | null>(null);
     readonly isLive = input(false);
     readonly mediaTitle = input<PlayerMediaTitle | null>(null);
+    /** True while the live screen's channel bar/category column/EPG grid is open (§7.3/§6.3). */
+    readonly isOverlayActive = input(false);
 
-    /** Live-only; nothing consumes this yet (Phase 5 builds the channel bar). */
     readonly channelChangeRequested = output<'up' | 'down'>();
+    /** Live-only: OK requested the channel bar instead of toggling play/pause. */
+    readonly openChannelBarRequested = output<void>();
+    /** Closes whatever overlay is currently claiming the key stream. */
+    readonly overlayBackRequested = output<void>();
     readonly exited = output<void>();
 
     private readonly controls = viewChild.required(PlayerControlsComponent);
@@ -57,6 +62,9 @@ export class TvPlayerControlsComponent {
                 reveal: () => this.controls().reveal(),
                 onChannelChange: (direction) =>
                     this.channelChangeRequested.emit(direction),
+                onOpenChannelBar: () => this.openChannelBarRequested.emit(),
+                isOverlayActive: () => this.isOverlayActive(),
+                onOverlayBack: () => this.overlayBackRequested.emit(),
                 onExit: () => this.exited.emit(),
             });
             onCleanup(unregister);

@@ -1,0 +1,36 @@
+<div class="tv-channel-bar__list">
+    @for (channel of channels(); track trackById($index, channel)) {
+        <button
+            type="button"
+            tvFocusable
+            class="tv-channel-bar__item"
+            [class.tv-channel-bar__item--playing]="
+                channel.id === playingChannelId()
+            "
+            (click)="channelActivated.emit(channel)"
+        >
+            @if (channel.logoUrl) {
+                <img
+                    class="tv-channel-bar__logo"
+                    [src]="channel.logoUrl"
+                    alt=""
+                />
+            } @else {
+                <span class="tv-channel-bar__logo tv-channel-bar__logo--placeholder"></span>
+            }
+            <span class="tv-channel-bar__name">{{ channel.name }}</span>
+        </button>
+    }
+    @if (appending()) {
+        <div class="tv-channel-bar__appending" aria-hidden="true">
+            <div class="tv-channel-bar__spinner"></div>
+        </div>
+    }
+</div>
+<div class="tv-channel-bar__programme">
+    @if (highlightedProgramme(); as programme) {
+        <p class="tv-channel-bar__programme-title">{{ programme.title }}</p>
+    } @else {
+        <p class="tv-channel-bar__programme-empty">{{ noProgrammeLabel() }}</p>
+    }
+</div>

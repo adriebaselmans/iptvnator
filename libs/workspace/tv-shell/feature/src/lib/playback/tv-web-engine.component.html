@@ -10,5 +10,9 @@
     [playerSurface]="playerSurface()"
     [isLive]="isLive()"
     [mediaTitle]="mediaTitle()"
+    [isOverlayActive]="isOverlayActive()"
+    (channelChangeRequested)="channelChangeRequested.emit($event)"
+    (openChannelBarRequested)="openChannelBarRequested.emit()"
+    (overlayBackRequested)="overlayBackRequested.emit()"
     (exited)="exited.emit()"
 ></lib-tv-player-controls>

@@ -16,14 +16,22 @@ import { TvPlayerControlsComponent } from './tv-player-controls.component';
     template: `<lib-tv-frame-copy-engine
         [streamUrl]="streamUrl()"
         [resumeSeconds]="resumeSeconds()"
+        [isOverlayActive]="isOverlayActive()"
         (playbackProgress)="progress($event)"
+        (channelChangeRequested)="channelChange($event)"
+        (openChannelBarRequested)="openChannelBar()"
+        (overlayBackRequested)="overlayBack()"
         (exited)="exit()"
     />`,
 })
 class HostComponent {
     streamUrl = signal('http://host/movie/1.mkv');
     resumeSeconds = signal(0);
+    isOverlayActive = signal(false);
     progress = jest.fn();
+    channelChange = jest.fn();
+    openChannelBar = jest.fn();
+    overlayBack = jest.fn();
     exit = jest.fn();
 }
 
@@ -138,5 +146,28 @@ describe('TvFrameCopyEngineComponent', () => {
         controls.exited.emit();
 
         expect(fixture.componentInstance.exit).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards channel/overlay events from the mounted TV controls (§7.3)', () => {
+        const controls = fixture.debugElement.query(
+            By.directive(TvPlayerControlsComponent)
+        ).componentInstance as TvPlayerControlsComponent;
+        controls.channelChangeRequested.emit('up');
+        controls.openChannelBarRequested.emit();
+        controls.overlayBackRequested.emit();
+
+        expect(fixture.componentInstance.channelChange).toHaveBeenCalledWith('up');
+        expect(fixture.componentInstance.openChannelBar).toHaveBeenCalledTimes(1);
+        expect(fixture.componentInstance.overlayBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards isOverlayActive down to the mounted TV controls', () => {
+        fixture.componentInstance.isOverlayActive.set(true);
+        fixture.detectChanges();
+
+        const controls = fixture.debugElement.query(
+            By.directive(TvPlayerControlsComponent)
+        ).componentInstance as TvPlayerControlsComponent;
+        expect(controls.isOverlayActive()).toBe(true);
     });
 });

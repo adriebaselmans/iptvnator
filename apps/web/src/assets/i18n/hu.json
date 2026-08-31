@@ -1679,6 +1679,16 @@
         "PLAYBACK": {
             "ENGINE_FRAME_COPY": "Embedded MPV (frame-copy)",
             "ENGINE_WEB": "Web player"
+        },
+        "LIVE": {
+            "LOADING": "Loading…",
+            "EMPTY_TITLE": "No live channels",
+            "EMPTY_DESCRIPTION": "This source has no live channels yet.",
+            "ERROR_TITLE": "Could not load live TV",
+            "ERROR_DESCRIPTION": "Check the connection to your source and try again.",
+            "RETRY": "Retry",
+            "CHANNEL_BAR_NO_PROGRAMME": "No programme information",
+            "EPG_NO_DATA": "No guide data"
         }
     }
 }
