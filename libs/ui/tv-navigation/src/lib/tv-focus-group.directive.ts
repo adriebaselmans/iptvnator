@@ -1,4 +1,11 @@
-import { Directive, inject, input, OnDestroy, OnInit } from '@angular/core';
+import {
+    Directive,
+    ElementRef,
+    inject,
+    input,
+    OnDestroy,
+    OnInit,
+} from '@angular/core';
 import type { FocusOrientation } from './tv-focus-geometry';
 import type { FocusGroupNeighbours } from './tv-focus-graph';
 import { TvFocusService } from './tv-focus.service';
@@ -22,6 +29,7 @@ let groupSequence = 0;
 })
 export class TvFocusGroupDirective implements OnInit, OnDestroy {
     private readonly focusService = inject(TvFocusService);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     /** Explicit group id. Falls back to an auto-generated id when omitted. */
     readonly tvFocusGroup = input<string | undefined>(undefined);
@@ -42,6 +50,7 @@ export class TvFocusGroupDirective implements OnInit, OnDestroy {
             orientation: () => this.orientation(),
             columnCount: () => this.columnCount(),
             neighbours: () => this.neighbours(),
+            host: this.elementRef.nativeElement,
         });
     }
 

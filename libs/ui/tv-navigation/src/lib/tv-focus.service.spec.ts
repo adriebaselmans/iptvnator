@@ -40,7 +40,14 @@ describe('TvFocusService', () => {
             orientation: () => options.orientation ?? 'row',
             columnCount: () => options.columnCount ?? 1,
             neighbours: () => options.neighbours ?? {},
+            host: containerFor(id),
         });
+    }
+
+    /** Flushes the MutationObserver microtask queue jsdom delivers records on. */
+    async function flushMutations(): Promise<void> {
+        await Promise.resolve();
+        await Promise.resolve();
     }
 
     /** Registers one item, appended to the end of the group's DOM container. */
@@ -156,6 +163,113 @@ describe('TvFocusService', () => {
         expect(service.itemIndex('row-a', inserted)).toBe(
             service.activeIndex()
         );
+    });
+
+    describe('DOM relocation of an already-registered item', () => {
+        // Simulates Angular's `@for` with `track` REUSING a view whose id
+        // survives into a new list: the DOM node is moved without
+        // `ngOnInit` re-running, so `insertByDocumentPosition` (registration
+        // time only) never sees it. This is the gap correction #15 covers —
+        // distinct from the mid-list-insertion test above, which only ever
+        // registers a brand-new element.
+
+        it('is navigated in its new position after the DOM node is moved without re-registering', async () => {
+            registerGroup('row-a');
+            const [first, second, third] = registerItems('row-a', 3);
+            const container = containerFor('row-a');
+
+            // Relocate the DOM-first element to the end — no register/unregister
+            // call accompanies the move, exactly like a reused `@for` view.
+            const firstElement = container.children[0];
+            container.appendChild(firstElement);
+            // DOM order is now [second, third, first].
+
+            await flushMutations();
+
+            expect(service.itemIndex('row-a', second)).toBe(0);
+            expect(service.itemIndex('row-a', third)).toBe(1);
+            expect(service.itemIndex('row-a', first)).toBe(2);
+
+            service.setActive('row-a', 0);
+            service.move('right');
+            expect(service.itemIndex('row-a', third)).toBe(
+                service.activeIndex()
+            );
+        });
+
+        it('resolves a reorder of several items at once', async () => {
+            registerGroup('row-a');
+            const [a, b, c, d] = registerItems('row-a', 4);
+            const container = containerFor('row-a');
+
+            // Reverse the DOM order entirely: [a, b, c, d] -> [d, c, b, a].
+            const [elA, elB, elC, elD] = Array.from(container.children);
+            container.appendChild(elD);
+            container.appendChild(elC);
+            container.appendChild(elB);
+            container.appendChild(elA);
+
+            await flushMutations();
+
+            expect(service.itemIndex('row-a', d)).toBe(0);
+            expect(service.itemIndex('row-a', c)).toBe(1);
+            expect(service.itemIndex('row-a', b)).toBe(2);
+            expect(service.itemIndex('row-a', a)).toBe(3);
+        });
+
+        it('removal and re-insertion still behave correctly', async () => {
+            registerGroup('row-a');
+            const [first, second, third] = registerItems('row-a', 3);
+            const container = containerFor('row-a');
+
+            service.unregisterItem('row-a', second);
+            container.children[1].remove(); // was `second`'s element
+            await flushMutations();
+
+            expect(service.itemIndex('row-a', first)).toBe(0);
+            expect(service.itemIndex('row-a', third)).toBe(1);
+
+            const reinserted = registerItemAt('row-a', 1);
+            await flushMutations();
+
+            expect(service.itemIndex('row-a', first)).toBe(0);
+            expect(service.itemIndex('row-a', reinserted)).toBe(1);
+            expect(service.itemIndex('row-a', third)).toBe(2);
+        });
+
+        it('disconnects its observer on group teardown — no leaked observers', () => {
+            const disconnectSpy = jest.spyOn(
+                MutationObserver.prototype,
+                'disconnect'
+            );
+
+            registerGroup('row-a');
+            registerItems('row-a', 2);
+
+            service.unregisterGroup('row-a');
+
+            expect(disconnectSpy).toHaveBeenCalledTimes(1);
+            disconnectSpy.mockRestore();
+        });
+
+        it('a later DOM mutation on a torn-down group is inert', async () => {
+            registerGroup('row-a');
+            const [first, second] = registerItems('row-a', 2);
+            const container = containerFor('row-a');
+
+            service.unregisterGroup('row-a');
+
+            // If the observer were still attached, mutating the now-detached
+            // container must not throw or resurrect the unregistered group.
+            const firstElement = container.children[0];
+            expect(() => {
+                container.appendChild(firstElement);
+            }).not.toThrow();
+            await flushMutations();
+
+            expect(service.itemIndex('row-a', first)).toBe(-1);
+            expect(service.itemIndex('row-a', second)).toBe(-1);
+        });
     });
 
     it('the common append path performs a bounded number of comparisons, not a full re-sort', () => {

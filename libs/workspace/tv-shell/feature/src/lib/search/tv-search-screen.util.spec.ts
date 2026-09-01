@@ -20,7 +20,7 @@ function item(overrides: Partial<TvSearchSourceItem> = {}): TvSearchSourceItem {
 
 describe('toTvSearchResultItem', () => {
     it('maps a movie result to the movie detail route', () => {
-        const result = toTvSearchResultItem(item(), PLAYLIST_ID, 1);
+        const result = toTvSearchResultItem(item(), PLAYLIST_ID);
         expect(result?.route).toEqual([
             '/tv',
             'xtreams',
@@ -34,8 +34,7 @@ describe('toTvSearchResultItem', () => {
     it('maps a series result to the series detail route', () => {
         const result = toTvSearchResultItem(
             item({ type: 'series', xtream_id: 7 }),
-            PLAYLIST_ID,
-            1
+            PLAYLIST_ID
         );
         expect(result?.route).toEqual([
             '/tv',
@@ -50,8 +49,7 @@ describe('toTvSearchResultItem', () => {
     it('maps a live result to the live screen route', () => {
         const result = toTvSearchResultItem(
             item({ type: 'live', xtream_id: 5 }),
-            PLAYLIST_ID,
-            1
+            PLAYLIST_ID
         );
         expect(result?.route).toEqual(['/tv', 'xtreams', PLAYLIST_ID, 'live']);
     });
@@ -59,28 +57,20 @@ describe('toTvSearchResultItem', () => {
     it('falls back to `id` when `xtream_id` is absent', () => {
         const result = toTvSearchResultItem(
             item({ xtream_id: undefined, id: 9 }),
-            PLAYLIST_ID,
-            1
+            PLAYLIST_ID
         );
-        expect(result?.id).toBe('1:9');
-    });
-
-    it('scopes the emitted id to the generation, so the same source id never collides across searches', () => {
-        const first = toTvSearchResultItem(item({ xtream_id: 1 }), PLAYLIST_ID, 1);
-        const second = toTvSearchResultItem(item({ xtream_id: 1 }), PLAYLIST_ID, 2);
-        expect(first?.id).not.toBe(second?.id);
+        expect(result?.id).toBe(9);
     });
 
     it('returns null without a usable id or title', () => {
         expect(
             toTvSearchResultItem(
                 item({ xtream_id: undefined, id: undefined }),
-                PLAYLIST_ID,
-                1
+                PLAYLIST_ID
             )
         ).toBeNull();
         expect(
-            toTvSearchResultItem(item({ title: '' }), PLAYLIST_ID, 1)
+            toTvSearchResultItem(item({ title: '' }), PLAYLIST_ID)
         ).toBeNull();
     });
 });
@@ -93,8 +83,7 @@ describe('toTvSearchResultItems', () => {
                 item({ title: '' }),
                 item({ xtream_id: 3, title: 'C' }),
             ],
-            PLAYLIST_ID,
-            1
+            PLAYLIST_ID
         );
         expect(results.map((r) => r.title)).toEqual(['A', 'C']);
     });

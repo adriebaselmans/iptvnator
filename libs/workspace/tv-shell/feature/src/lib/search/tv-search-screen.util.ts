@@ -32,13 +32,18 @@ function buildRoute(
  * `id` as a fallback) — mirrored here rather than imported, since this
  * screen only needs id/title/poster, not the full desktop search contract.
  *
- * `generation` is folded into the emitted id — see `toTvSearchResultItems`
- * for why that is load-bearing, not decorative.
+ * The emitted id is the plain source id, unscoped. An earlier version of
+ * this function scoped it to a per-search generation counter to force
+ * Angular's `@for` to recreate every card on each new query — a workaround
+ * for `TvFocusService` only ordering items by DOM position at registration
+ * time. That primitive now re-derives order on DOM mutation too (a
+ * `MutationObserver` on the group host), so a reused-and-moved view is
+ * ordered correctly without recreation; see `libs/ui/tv-navigation`'s
+ * `TvFocusService`.
  */
 export function toTvSearchResultItem(
     item: TvSearchSourceItem,
-    playlistId: string,
-    generation: number
+    playlistId: string
 ): TvSearchResultItem | null {
     const itemId = item.xtream_id ?? item.id;
     if (itemId === undefined || !item.title) {
@@ -46,45 +51,21 @@ export function toTvSearchResultItem(
     }
 
     return {
-        id: `${generation}:${itemId}`,
+        id: itemId,
         title: item.title,
         posterUrl: item.poster_url,
         route: buildRoute(playlistId, item.type, itemId),
     };
 }
 
-/**
- * Maps a full result set, scoping every item's id to `generation` — a
- * counter the caller bumps once per completed search (see
- * `TvSearchScreenComponent.results`).
- *
- * This is a real fix for a real gap, not decoration: `TvFocusService`
- * orders a group's items by DOM position, but only AT REGISTRATION time
- * (`insertByDocumentPosition`, run from `TvFocusableDirective.ngOnInit`).
- * When two consecutive result sets share an id, Angular's `@for` REUSES
- * that view and MOVES its DOM node to the new position — without
- * re-running `ngOnInit` — so the focus group's cached position for that
- * item goes stale relative to where it now actually sits. Scoping every
- * id to the search generation guarantees no id survives across a result
- * set change, so `@for` destroys and recreates every card on each new
- * search, `ngOnInit` genuinely reruns, and registration order is real DOM
- * order again. Confirmed to reproduce without this: two result sets
- * sharing an id in a different position left the focus group's recorded
- * order stale. §6.2 anticipated the general hazard ("search results
- * updating per keystroke" are called out by name) but its stated fix
- * (order-by-insertion) does not cover a reused-and-moved node, only a
- * freshly-registered or removed one — that gap is the thing this works
- * around, in the screen, because `libs/ui/tv-navigation` is out of bounds
- * to modify (§5.5).
- */
+/** Maps a full result set to the results grid's item shape. */
 export function toTvSearchResultItems(
     items: readonly TvSearchSourceItem[],
-    playlistId: string,
-    generation: number
+    playlistId: string
 ): TvSearchResultItem[] {
     const mapped: TvSearchResultItem[] = [];
     for (const item of items) {
-        const entry = toTvSearchResultItem(item, playlistId, generation);
+        const entry = toTvSearchResultItem(item, playlistId);
         if (entry) mapped.push(entry);
     }
     return mapped;

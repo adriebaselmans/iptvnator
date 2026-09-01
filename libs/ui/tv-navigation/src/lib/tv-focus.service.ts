@@ -21,6 +21,16 @@ export interface FocusGroupRegistration {
     readonly orientation: () => FocusOrientation;
     readonly columnCount: () => number;
     readonly neighbours: () => FocusGroupNeighbours;
+    /**
+     * The group's host element. When present, {@link TvFocusService} watches
+     * it (`childList`, `subtree`) so an item Angular's `@for` view reuse
+     * MOVES within the DOM — an id that survives into a new list keeps its
+     * view and relocates the node without re-running `ngOnInit` — is
+     * re-ordered too, not just newly registered ones. Optional only so
+     * lower-level tests that never exercise DOM relocation can skip wiring a
+     * host.
+     */
+    readonly host?: Element;
 }
 
 interface RegisteredItem {
@@ -113,6 +123,13 @@ export class TvFocusService {
     private readonly activeGroupSignal = signal<string | null>(null);
     private readonly activeIndexSignal = signal(0);
 
+    /**
+     * Not signal state on purpose: it is bookkeeping for a side channel
+     * (DOM mutations) that resorts through `mutateGroups` itself, so it
+     * needs no reactive tracking of its own.
+     */
+    private readonly mutationObservers = new Map<string, MutationObserver>();
+
     readonly activeGroupId = this.activeGroupSignal.asReadonly();
     readonly activeIndex = this.activeIndexSignal.asReadonly();
 
@@ -141,9 +158,12 @@ export class TvFocusService {
         this.mutateGroups((groups) => {
             groups.set(registration.id, { ...registration, items: [] });
         });
+        this.observeGroupHost(registration.id, registration.host);
     }
 
     unregisterGroup(id: string): void {
+        this.mutationObservers.get(id)?.disconnect();
+        this.mutationObservers.delete(id);
         this.mutateGroups((groups) => {
             groups.delete(id);
         });
@@ -270,5 +290,44 @@ export class TvFocusService {
         const next = new Map(this.groupsSignal());
         mutator(next);
         this.groupsSignal.set(next);
+    }
+
+    /**
+     * Watches a group's host so a relocated-but-already-registered item is
+     * re-ordered too — the case `insertByDocumentPosition` cannot see, since
+     * it only runs from `ngOnInit`. The callback fires as a microtask,
+     * outside any `computed`'s evaluation, which is exactly why the resort
+     * happens eagerly here rather than lazily on next read: `activeElement`
+     * below is a `computed`, and Angular forbids writing a signal while one
+     * is evaluating, so a "dirty" flag resolved from inside a computed read
+     * was not an option.
+     */
+    private observeGroupHost(id: string, host?: Element): void {
+        if (!host || typeof MutationObserver === 'undefined') {
+            return;
+        }
+        const observer = new MutationObserver(() => this.resortGroup(id));
+        observer.observe(host, { childList: true, subtree: true });
+        this.mutationObservers.set(id, observer);
+    }
+
+    /**
+     * Re-derives a group's item order from real DOM position. Mutations are
+     * rare relative to registrations, so a full re-sort here is fine even
+     * though `registerItem` stays insertion-based (see `insertByDocumentPosition`);
+     * V8's TimSort is near-linear on the already-sorted arrays a pure append
+     * produces, so the common case stays cheap too.
+     */
+    private resortGroup(id: string): void {
+        this.mutateGroups((groups) => {
+            const group = groups.get(id);
+            if (!group) {
+                return;
+            }
+            groups.set(id, {
+                ...group,
+                items: group.items.slice().sort(byDocumentPosition),
+            });
+        });
     }
 }

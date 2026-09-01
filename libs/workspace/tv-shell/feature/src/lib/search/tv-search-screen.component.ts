@@ -97,29 +97,11 @@ export class TvSearchScreenComponent {
         () => this.query().trim().length >= TV_SEARCH_MIN_QUERY_LENGTH
     );
 
-    // Every id emitted to the results grid is scoped to this counter, which
-    // bumps whenever `store.searchResults()` hands back a genuinely new
-    // array reference (i.e. once per completed search) — see
-    // `toTvSearchResultItems` for why. Deliberately a plain field mutated
-    // inside the computed, not a signal: it must change in lockstep with
-    // the array-identity check, not on its own schedule.
-    private searchResultsGeneration = 0;
-    private lastSearchResultsRef: readonly unknown[] | null = null;
-
-    protected readonly results = computed<TvSearchResultItem[]>(() => {
-        const raw = this.store.searchResults();
-        if (raw !== this.lastSearchResultsRef) {
-            this.lastSearchResultsRef = raw;
-            this.searchResultsGeneration++;
-        }
-        return this.hasEnoughQuery()
-            ? toTvSearchResultItems(
-                  raw,
-                  this.playlistId(),
-                  this.searchResultsGeneration
-              )
-            : [];
-    });
+    protected readonly results = computed<TvSearchResultItem[]>(() =>
+        this.hasEnoughQuery()
+            ? toTvSearchResultItems(this.store.searchResults(), this.playlistId())
+            : []
+    );
 
     protected readonly isLoading = computed(
         () =>
