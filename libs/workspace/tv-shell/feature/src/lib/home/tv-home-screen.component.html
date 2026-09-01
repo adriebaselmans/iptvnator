@@ -1,0 +1,40 @@
+@if (hasError()) {
+    <lib-tv-catalog-state
+        variant="error"
+        [title]="'TV.HOME.ERROR_TITLE' | translate"
+        [description]="'TV.HOME.ERROR_DESCRIPTION' | translate"
+        [retryLabel]="'TV.HOME.RETRY' | translate"
+        (retry)="onRetry()"
+    />
+} @else if (isLoading()) {
+    <lib-tv-catalog-state
+        variant="loading"
+        [title]="'TV.HOME.LOADING' | translate"
+    />
+} @else if (isEmpty()) {
+    <lib-tv-catalog-state
+        variant="empty"
+        [title]="'TV.HOME.EMPTY_TITLE' | translate"
+        [description]="'TV.HOME.EMPTY_DESCRIPTION' | translate"
+    />
+} @else {
+    @if (hero(); as heroItem) {
+        <lib-tv-home-hero
+            [tvFocusGroup]="heroGroupId"
+            [neighbours]="layout().heroNeighbours ?? {}"
+            [title]="heroItem.title"
+            [backdropUrl]="heroItem.backdropUrl"
+            [resumeLabel]="'TV.HOME.RESUME' | translate"
+            (resumeActivated)="onResumeActivated()"
+        />
+    }
+    @for (rail of layout().rails; track rail.groupId) {
+        <lib-tv-home-rail
+            [tvFocusGroup]="rail.groupId"
+            [neighbours]="rail.neighbours"
+            [heading]="rail.titleKey | translate"
+            [items]="rail.items"
+            (itemActivated)="onRailItemActivated($event)"
+        />
+    }
+}

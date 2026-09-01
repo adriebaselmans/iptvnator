@@ -64,12 +64,28 @@ export class TvLiveEpgFeedService {
         playlistId: string | null,
         credentials: XtreamCredentials
     ): void {
-        if (channels.length === 0) return;
-        const entries: EpgQueueEntry[] = channels.map((channel) => ({
-            streamId: resolveChannelId(channel),
-            epgChannelId: channel.epg_channel_id ?? null,
-            playlistId,
-        }));
+        this.ensureVisibleEntries(
+            channels.map((channel) => ({
+                streamId: resolveChannelId(channel),
+                epgChannelId: channel.epg_channel_id ?? null,
+                playlistId,
+            })),
+            credentials
+        );
+    }
+
+    /**
+     * Same contract as {@link ensureVisible}, for callers that already have
+     * `EpgQueueEntry` shapes rather than full `XtreamLiveStream` objects —
+     * the home screen's "Live now" rail (§7.2) only has the dashboard's
+     * favorite-item shape (stream id + best-effort XMLTV lookup key), not a
+     * full catalog stream.
+     */
+    ensureVisibleEntries(
+        entries: readonly EpgQueueEntry[],
+        credentials: XtreamCredentials
+    ): void {
+        if (entries.length === 0) return;
         const visibleIds = new Set(entries.map((entry) => entry.streamId));
         void this.epgQueue.enqueue(entries, visibleIds, credentials);
     }

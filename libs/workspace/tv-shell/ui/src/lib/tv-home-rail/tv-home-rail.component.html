@@ -1,0 +1,12 @@
+<h2 class="tv-home-rail__heading">{{ heading() }}</h2>
+<div class="tv-home-rail__items">
+    @for (item of items(); track trackById($index, item)) {
+        <lib-tv-poster-card
+            [title]="item.title"
+            [posterUrl]="item.posterUrl"
+            [subtitle]="item.subtitle"
+            [kind]="item.kind ?? 'movie'"
+            (click)="itemActivated.emit(item)"
+        />
+    }
+</div>

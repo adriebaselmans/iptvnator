@@ -1,0 +1,18 @@
+:host {
+    display: block;
+    padding: 0 0.25rem;
+}
+
+.tv-home-rail__heading {
+    margin: 0 0 1rem;
+    padding: 0 2.75rem;
+    color: var(--app-heading-color, #e6e1e5);
+    font-size: 1.35rem;
+}
+
+.tv-home-rail__items {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.25rem 2.75rem 1.5rem;
+    overflow-x: auto;
+}

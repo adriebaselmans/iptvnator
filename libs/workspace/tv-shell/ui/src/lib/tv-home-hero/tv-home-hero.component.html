@@ -1,0 +1,24 @@
+@if (backdropUrl(); as backdrop) {
+    <img
+        class="tv-home-hero__backdrop"
+        [src]="backdrop"
+        alt=""
+        aria-hidden="true"
+    />
+}
+<div class="tv-home-hero__scrim" aria-hidden="true"></div>
+
+<div class="tv-home-hero__content">
+    <h1 class="tv-home-hero__title">{{ title() }}</h1>
+    @if (subtitle(); as subtitle) {
+        <p class="tv-home-hero__subtitle">{{ subtitle }}</p>
+    }
+    <button
+        type="button"
+        tvFocusable
+        class="tv-home-hero__resume"
+        (click)="resumeActivated.emit()"
+    >
+        {{ resumeLabel() }}
+    </button>
+</div>

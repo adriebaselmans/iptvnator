@@ -37,6 +37,12 @@ export class TvPosterCardComponent {
     readonly posterUrl = input<string | undefined>(undefined);
     /** Rendered as a fallback badge/icon when there is no poster image. */
     readonly kind = input<'movie' | 'series'>('movie');
+    /**
+     * Optional line under the title — e.g. a live channel's current
+     * programme (§7.2 "Live now" rail, fed through `EpgQueueService`).
+     * Omitted entirely when absent, so every other consumer is unaffected.
+     */
+    readonly subtitle = input<string | undefined>(undefined);
 
     protected readonly imageFailed = signal(false);
 

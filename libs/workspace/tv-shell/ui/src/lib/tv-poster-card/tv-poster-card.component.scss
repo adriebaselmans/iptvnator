@@ -70,3 +70,13 @@
 :host(.tv-focused) .tv-poster-card__title {
     color: var(--app-selection-color, #78adff);
 }
+
+.tv-poster-card__subtitle {
+    min-width: 0;
+    color: var(--app-on-surface-variant, #a8a4b3);
+    font-size: 0.85rem;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

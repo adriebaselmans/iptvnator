@@ -1,0 +1,32 @@
+<div
+    [tvFocusGroup]="focusGroupId()"
+    orientation="grid"
+    [columnCount]="columnCount"
+    [neighbours]="neighbours()"
+    class="tv-keyboard__keys"
+>
+    @for (key of keys; track key.id) {
+        <button
+            type="button"
+            tvFocusable
+            class="tv-keyboard__key"
+            [class.tv-keyboard__key--wide]="key.kind !== 'char'"
+            (click)="onKeyActivated(key)"
+        >
+            @switch (key.kind) {
+                @case ('backspace') {
+                    {{ 'TV.SEARCH.KEYBOARD_BACKSPACE' | translate }}
+                }
+                @case ('clear') {
+                    {{ 'TV.SEARCH.KEYBOARD_CLEAR' | translate }}
+                }
+                @case ('space') {
+                    {{ 'TV.SEARCH.KEYBOARD_SPACE' | translate }}
+                }
+                @default {
+                    {{ key.label }}
+                }
+            }
+        </button>
+    }
+</div>

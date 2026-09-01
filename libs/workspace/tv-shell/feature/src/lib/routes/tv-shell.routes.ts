@@ -10,11 +10,6 @@ const loadTvSourcePickerComponent: ComponentLoader = () =>
         (c) => c.TvSourcePickerComponent
     );
 
-const loadTvPlaceholderScreenComponent: ComponentLoader = () =>
-    import('../placeholder/tv-placeholder-screen.component').then(
-        (c) => c.TvPlaceholderScreenComponent
-    );
-
 const loadTvCatalogScreenComponent: ComponentLoader = () =>
     import('../catalog/tv-catalog-screen.component').then(
         (c) => c.TvCatalogScreenComponent
@@ -30,6 +25,16 @@ const loadTvLiveScreenComponent: ComponentLoader = () =>
         (c) => c.TvLiveScreenComponent
     );
 
+const loadTvHomeScreenComponent: ComponentLoader = () =>
+    import('../home/tv-home-screen.component').then(
+        (c) => c.TvHomeScreenComponent
+    );
+
+const loadTvSearchScreenComponent: ComponentLoader = () =>
+    import('../search/tv-search-screen.component').then(
+        (c) => c.TvSearchScreenComponent
+    );
+
 /**
  * The `/tv` route subtree (§5.2). Mirrors the workspace's Xtream route
  * shape (`xtreams/:id/...`) so a future "open this item in the other shell"
@@ -38,9 +43,8 @@ const loadTvLiveScreenComponent: ComponentLoader = () =>
  * The source picker (`''`) is a Phase 2 screen; `movies`/`series` are Phase
  * 3a (§7.4, `TvCatalogScreenComponent`, driven by route `data.tvCatalogType`).
  * `detail/:type/:itemId` is Phase 3b (§7.5, `TvDetailScreenComponent`).
- * `live` is Phase 5 (§7.3, `TvLiveScreenComponent`). `home`/`search` still
- * render `TvPlaceholderScreenComponent` until their owning phase replaces
- * them — the routes exist now so navigation and deep links resolve.
+ * `live` is Phase 5 (§7.3, `TvLiveScreenComponent`). `home` and `search` are
+ * Phase 6 (§7.2/§7.6, `TvHomeScreenComponent`/`TvSearchScreenComponent`).
  */
 export function createTvRoutes(): Route[] {
     return [
@@ -56,7 +60,7 @@ export function createTvRoutes(): Route[] {
                 {
                     path: 'xtreams/:id/home',
                     data: { tvScreen: 'home' },
-                    loadComponent: loadTvPlaceholderScreenComponent,
+                    loadComponent: loadTvHomeScreenComponent,
                 },
                 {
                     path: 'xtreams/:id/live',
@@ -76,7 +80,7 @@ export function createTvRoutes(): Route[] {
                 {
                     path: 'xtreams/:id/search',
                     data: { tvScreen: 'search' },
-                    loadComponent: loadTvPlaceholderScreenComponent,
+                    loadComponent: loadTvSearchScreenComponent,
                 },
                 {
                     path: 'xtreams/:id/detail/:type/:itemId',

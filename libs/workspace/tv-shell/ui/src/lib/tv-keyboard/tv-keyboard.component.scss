@@ -1,0 +1,30 @@
+:host {
+    display: block;
+}
+
+.tv-keyboard__keys {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(3rem, 1fr));
+    gap: 0.5rem;
+}
+
+.tv-keyboard__key {
+    padding: 0.75rem 0;
+    border: 3px solid transparent;
+    border-radius: 0.5rem;
+    background: var(--app-widget-bg, #1e2330);
+    color: var(--app-on-surface, #e6e1e5);
+    font-size: 1.1rem;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.tv-keyboard__key--wide {
+    text-transform: none;
+    font-size: 0.9rem;
+}
+
+.tv-keyboard__key.tv-focused {
+    border-color: var(--app-selection-color, #78adff);
+    box-shadow: 0 0 0 4px var(--app-selection-glow, rgba(120, 173, 255, 0.4));
+}

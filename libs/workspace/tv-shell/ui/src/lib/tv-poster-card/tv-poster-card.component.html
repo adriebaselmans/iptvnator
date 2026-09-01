@@ -16,3 +16,6 @@
     }
 </div>
 <div class="tv-poster-card__title">{{ title() }}</div>
+@if (subtitle(); as subtitle) {
+    <div class="tv-poster-card__subtitle">{{ subtitle }}</div>
+}

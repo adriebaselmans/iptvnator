@@ -1689,6 +1689,33 @@
             "RETRY": "Retry",
             "CHANNEL_BAR_NO_PROGRAMME": "No programme information",
             "EPG_NO_DATA": "No guide data"
+        },
+        "HOME": {
+            "LOADING": "Loading…",
+            "ERROR_TITLE": "Could not load home",
+            "ERROR_DESCRIPTION": "Check the connection to your source and try again.",
+            "RETRY": "Retry",
+            "EMPTY_TITLE": "Nothing here yet",
+            "EMPTY_DESCRIPTION": "Watch, add favourites or wait for new titles to show up here.",
+            "RESUME": "Resume",
+            "RAIL_CONTINUE_WATCHING": "Continue watching",
+            "RAIL_RECENTLY_ADDED": "Recently added",
+            "RAIL_FAVOURITES": "Favourites",
+            "RAIL_LIVE_NOW": "Live now",
+            "RAIL_TRENDING": "Trending",
+            "RAIL_RECOMMENDATIONS": "Because you watched"
+        },
+        "SEARCH": {
+            "LOADING": "Searching…",
+            "ERROR_TITLE": "Could not search",
+            "ERROR_DESCRIPTION": "Check the connection to your source and try again.",
+            "RETRY": "Retry",
+            "EMPTY_TITLE": "No results",
+            "EMPTY_DESCRIPTION": "Try a different title.",
+            "QUERY_PLACEHOLDER": "Type to search…",
+            "KEYBOARD_BACKSPACE": "Backspace",
+            "KEYBOARD_CLEAR": "Clear",
+            "KEYBOARD_SPACE": "Space"
         }
     }
 }

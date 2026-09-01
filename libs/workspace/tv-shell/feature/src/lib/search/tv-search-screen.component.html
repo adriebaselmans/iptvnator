@@ -1,0 +1,51 @@
+<div class="tv-search-screen__keyboard-pane">
+    <div class="tv-search-screen__query">
+        @if (query()) {
+            {{ query() }}
+        } @else {
+            <span class="tv-search-screen__query-placeholder">{{
+                'TV.SEARCH.QUERY_PLACEHOLDER' | translate
+            }}</span>
+        }
+    </div>
+    <lib-tv-keyboard
+        [focusGroupId]="keyboardGroupId"
+        [neighbours]="keyboardNeighbours()"
+        (charEntered)="onCharEntered($event)"
+        (backspacePressed)="onBackspace()"
+        (cleared)="onCleared()"
+    />
+</div>
+
+<div class="tv-search-screen__results-pane" #gridHost>
+    @if (hasError()) {
+        <lib-tv-catalog-state
+            variant="error"
+            [title]="'TV.SEARCH.ERROR_TITLE' | translate"
+            [description]="'TV.SEARCH.ERROR_DESCRIPTION' | translate"
+            [retryLabel]="'TV.SEARCH.RETRY' | translate"
+            [retryGroupId]="retryGroupId"
+            (retry)="onRetry()"
+        />
+    } @else if (isLoading()) {
+        <lib-tv-catalog-state
+            variant="loading"
+            [title]="'TV.SEARCH.LOADING' | translate"
+        />
+    } @else if (isEmpty()) {
+        <lib-tv-catalog-state
+            variant="empty"
+            [title]="'TV.SEARCH.EMPTY_TITLE' | translate"
+            [description]="'TV.SEARCH.EMPTY_DESCRIPTION' | translate"
+        />
+    } @else {
+        <lib-tv-poster-grid
+            [tvFocusGroup]="resultsGroupId"
+            orientation="grid"
+            [columnCount]="columnCount()"
+            [neighbours]="resultsNeighbours"
+            [items]="results()"
+            (itemActivated)="onResultActivated($event)"
+        />
+    }
+</div>

@@ -9,3 +9,7 @@ export * from './lib/tv-season-tabs/tv-season-tabs.component';
 export * from './lib/tv-episode-row/tv-episode-row.component';
 export * from './lib/tv-channel-bar/tv-channel-bar.component';
 export * from './lib/tv-epg-grid/tv-epg-grid.component';
+export * from './lib/tv-home-hero/tv-home-hero.component';
+export * from './lib/tv-home-rail/tv-home-rail.component';
+export * from './lib/tv-keyboard/tv-keyboard.component';
+export * from './lib/tv-keyboard/tv-keyboard.util';
