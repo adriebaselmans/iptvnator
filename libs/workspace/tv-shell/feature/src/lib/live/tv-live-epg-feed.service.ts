@@ -5,9 +5,10 @@ import {
     type EpgQueueEntry,
     type XtreamCredentials,
 } from '@iptvnator/portal/xtream/data-access';
-import type { EpgItem, XtreamLiveStream } from '@iptvnator/shared/interfaces';
+import type { EpgItem } from '@iptvnator/shared/interfaces';
+import type { TvLiveChannelSource } from './tv-live-screen.util';
 
-function resolveChannelId(stream: XtreamLiveStream): number {
+function resolveChannelId(stream: TvLiveChannelSource): number {
     return Number(stream.xtream_id ?? stream.stream_id);
 }
 
@@ -60,7 +61,7 @@ export class TvLiveEpgFeedService {
      * queued behind the ones actually on screen.
      */
     ensureVisible(
-        channels: readonly XtreamLiveStream[],
+        channels: readonly TvLiveChannelSource[],
         playlistId: string | null,
         credentials: XtreamCredentials
     ): void {
@@ -76,7 +77,7 @@ export class TvLiveEpgFeedService {
 
     /**
      * Same contract as {@link ensureVisible}, for callers that already have
-     * `EpgQueueEntry` shapes rather than full `XtreamLiveStream` objects —
+     * `EpgQueueEntry` shapes rather than full `TvLiveChannelSource` objects —
      * the home screen's "Live now" rail (§7.2) only has the dashboard's
      * favorite-item shape (stream id + best-effort XMLTV lookup key), not a
      * full catalog stream.

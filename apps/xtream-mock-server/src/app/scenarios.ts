@@ -78,6 +78,18 @@ export const SCENARIOS: Record<string, ScenarioConfig> = {
         performanceFixture: 'catalog-100k',
         deferSeriesDetails: true,
     },
+    'tvscale:tvscale': {
+        name: 'tv-catalog-scale',
+        description:
+            'TV shell catalogue-scale fixture — 40,000 VOD titles in one category, no live/series generation',
+        seed: 40000,
+        categoryCount: { live: 0, vod: 1, series: 0 },
+        itemsPerCategory: 40_000,
+        seasonsPerSeries: 1,
+        episodesPerSeason: 1,
+        accountStatus: 'Active',
+        expiryDate: '2099-12-31',
+    },
     'series:series': {
         name: 'series-heavy',
         description:

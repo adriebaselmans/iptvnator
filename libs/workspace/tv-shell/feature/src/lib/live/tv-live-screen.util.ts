@@ -1,4 +1,4 @@
-import type { EpgItem, XtreamLiveStream } from '@iptvnator/shared/interfaces';
+import type { EpgItem } from '@iptvnator/shared/interfaces';
 import type {
     TvChannelBarItem,
     TvChannelBarProgramme,
@@ -6,9 +6,62 @@ import type {
     TvEpgGridRow,
 } from '@iptvnator/workspace/tv-shell/ui';
 
+/**
+ * The subset of live-stream fields these functions need. The full Xtream API
+ * shape (`XtreamLiveStream`) satisfies this structurally, but the store's
+ * `selectItemsFromSelectedCategory()` returns a much looser selection-item
+ * shape shared across live/VOD/series (no `stream_type`/`tv_archive`/`num`/
+ * ...), so casting that to `XtreamLiveStream[]` was unsound (rejected by
+ * TS2352 — the two types don't sufficiently overlap). `toTvLiveChannel`
+ * below validates and narrows a raw selection item down to exactly this
+ * shape instead of asserting it away.
+ */
+export interface TvLiveChannelSource {
+    readonly xtream_id?: number;
+    readonly stream_id?: number;
+    readonly name: string;
+    readonly stream_icon?: string;
+    readonly epg_channel_id?: string;
+}
+
+/**
+ * Narrows one loosely-typed store selection item down to
+ * `TvLiveChannelSource`, or `null` when it lacks a usable id or name (e.g. a
+ * malformed catalog row) — the same drop convention `toTvChannelBarItem`
+ * already applies one step later.
+ */
+export function toTvLiveChannel(item: {
+    readonly xtream_id?: unknown;
+    readonly stream_id?: unknown;
+    readonly name?: unknown;
+    readonly stream_icon?: unknown;
+    readonly epg_channel_id?: unknown;
+}): TvLiveChannelSource | null {
+    const xtreamId = typeof item.xtream_id === 'number' ? item.xtream_id : undefined;
+    const streamId =
+        typeof item.stream_id === 'number'
+            ? item.stream_id
+            : typeof item.stream_id === 'string'
+              ? Number(item.stream_id)
+              : undefined;
+    const name = typeof item.name === 'string' ? item.name : undefined;
+    if (name === undefined) return null;
+    if (xtreamId === undefined && (streamId === undefined || Number.isNaN(streamId))) {
+        return null;
+    }
+    return {
+        xtream_id: xtreamId,
+        stream_id: streamId,
+        name,
+        stream_icon: typeof item.stream_icon === 'string' ? item.stream_icon : undefined,
+        epg_channel_id:
+            typeof item.epg_channel_id === 'string' ? item.epg_channel_id : undefined,
+    };
+}
+
 /** Maps a raw Xtream live stream to the channel bar's item shape. */
 export function toTvChannelBarItem(
-    stream: XtreamLiveStream
+    stream: TvLiveChannelSource
 ): TvChannelBarItem | null {
     const id = Number(stream.xtream_id ?? stream.stream_id);
     if (!Number.isFinite(id) || !stream.name) {
@@ -22,7 +75,7 @@ export function toTvChannelBarItem(
 }
 
 export function buildTvChannelBarItems(
-    streams: readonly XtreamLiveStream[]
+    streams: readonly TvLiveChannelSource[]
 ): TvChannelBarItem[] {
     return streams
         .map(toTvChannelBarItem)
@@ -60,10 +113,10 @@ export function toEpgProgrammeSummary(
  * category) — the caller leaves playback untouched rather than guessing.
  */
 export function resolveTvZapTarget(
-    channels: readonly XtreamLiveStream[],
+    channels: readonly TvLiveChannelSource[],
     currentChannelId: number | null,
     direction: 'up' | 'down'
-): XtreamLiveStream | null {
+): TvLiveChannelSource | null {
     if (channels.length === 0) return null;
     const currentIndex = channels.findIndex(
         (channel) => Number(channel.xtream_id ?? channel.stream_id) === currentChannelId

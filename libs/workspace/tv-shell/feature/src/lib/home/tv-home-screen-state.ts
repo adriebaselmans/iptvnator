@@ -1,6 +1,9 @@
 import { computed, type Signal } from '@angular/core';
 import { findCurrentEpgItem } from '@iptvnator/portal/xtream/data-access';
-import type { DashboardRailsSettings } from '@iptvnator/shared/interfaces';
+import type {
+    CatalogTitleMatch,
+    DashboardRailsSettings,
+} from '@iptvnator/shared/interfaces';
 import type {
     DashboardDataService,
     DashboardRecommendationsService,
@@ -43,18 +46,31 @@ function mapSection(
     return mapped;
 }
 
+/**
+ * Trending entries carry a nullable `match` — TMDB titles the catalog
+ * title-match query could not confidently tie to anything in this
+ * playlist. Those have nowhere to navigate, so they are skipped here
+ * rather than passed to `toTvHomeMatchedRailItem`, which requires a
+ * resolved match. Recommendation entries never carry a null match (unmatched
+ * ones are dropped upstream), so this filter is a no-op for that caller.
+ */
 function mapMatchedSection(
     entries: readonly {
         title: string;
         posterUrl: string | null;
-        match: { playlistId: string; type: 'movie' | 'series'; xtreamId: number };
+        match: CatalogTitleMatch | null;
     }[],
     playlistId: string,
     idPrefix: string
 ): TvHomeNavigableRailItem[] {
     const mapped: TvHomeNavigableRailItem[] = [];
     for (const entry of entries) {
-        const item = toTvHomeMatchedRailItem(entry, playlistId, idPrefix);
+        if (!entry.match) continue;
+        const item = toTvHomeMatchedRailItem(
+            { ...entry, match: entry.match },
+            playlistId,
+            idPrefix
+        );
         if (item) mapped.push(item);
         if (mapped.length === TV_HOME_RAIL_ITEM_LIMIT) break;
     }

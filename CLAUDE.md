@@ -346,7 +346,9 @@ This is an Nx monorepo with the following structure:
     - **ui/remote-control** - Remote-control UI pieces
     - **ui/shared-portals** - Shared portal types (`LiveEpgPanelSummary`)
     - **ui/styles** - Shared styles/theme
+    - **ui/tv-navigation** (`@iptvnator/ui/tv-navigation`) - The TV shell's focus primitives: `TvFocusGroupDirective`/`TvFocusableDirective`, `TvFocusService`, and the pure DOM-free `tv-focus-geometry`/`tv-focus-graph` index arithmetic. No store dependency
     - **workspace/{shell,dashboard}** - Workspace shell (layout/navigation) and dashboard
+    - **workspace/tv-shell/{ui,feature}** - The 10-foot TV shell: `ui` is presentational components (poster grid/card, rails, on-screen keyboard, channel bar, EPG grid); `feature` is the routed screens and shell (`/tv` route tree). See `docs/architecture/tv-shell.md`
 
 ### Frontend Architecture (Angular)
 
@@ -553,7 +555,7 @@ State management via NgRx (`libs/m3u-state/`):
 
 See `docs/architecture/m3u-playlist-module.md` for complete documentation.
 
-**Routing**: Lazy-loaded routes in `apps/web/src/app/app.routes.ts`. All user-facing routes are nested under the workspace shell (`/workspace/...`); `/` redirects into the workspace.
+**Routing**: Lazy-loaded routes in `apps/web/src/app/app.routes.ts`. All user-facing routes are nested under the workspace shell (`/workspace/...`); `/` redirects into the workspace. A parallel `/tv` route tree (the 10-foot TV shell, `data: { layout: 'tv' }`) sits alongside it — see below and `docs/architecture/tv-shell.md`.
 
 - Dashboard: `/workspace/dashboard`; sources overview: `/workspace/sources`
 - M3U player: `/workspace/playlists/:id` (children: `favorites`, `recent`, `:view`) — routes in `libs/playlist/m3u/feature-player`
@@ -567,6 +569,7 @@ See `docs/architecture/m3u-playlist-module.md` for complete documentation.
   `/workspace/stalker/:id/downloads/:downloadId`. Focused download details hide
   the workspace context panel.
 - Settings: `/workspace/settings/:section` — one page per section (`general`, `playback`, `epg`, `dashboard`, `remote-control`, `tmdb`, `backup`, `reset`, `about`); `/workspace/settings` redirects to `general`, unknown or capability-gated sections redirect there too, and `/settings` redirects into the workspace. The shared form lives on the parent `SettingsComponent`, so edits survive section switches; a floating unsaved-changes bar (Save/Discard) replaces the old always-visible footer Save button. Leaving the settings AREA with a dirty form triggers `settingsUnsavedChangesGuard` (canDeactivate) and a save/discard/stay dialog — section switches deliberately bypass it, and a failed save cancels the navigation. Non-router exits are covered too: `SettingsUnloadGuardService` (provided by `SettingsComponent`) arms a `beforeunload` handler while the form is dirty (native leave prompt in the PWA) and arms an Electron main-process close guard (`window-close-guard.service.ts`) for the whole settings mount — mount-long on purpose, since arming on the first edit would race the close it protects against. The guard intercepts window close/app quit before `beforeunload` fires and completes the original intent only after the renderer confirms through the same dialog (a pristine form auto-confirms); Electron reloads are cancelled and re-triggered the same way, a failed save always keeps the window open, and installing an app update suspends the whole guard so the updater's quit passes unchallenged — every install entry point (settings About section and the global update notification panel) must go through the root `AppUpdateInstallService`, which owns that suspend/restore choreography
+- TV shell: `/tv` (source picker, redirects straight to home with exactly one Xtream source), `/tv/xtreams/:id/home`, `/tv/xtreams/:id/live`, `/tv/xtreams/:id/movies`, `/tv/xtreams/:id/series`, `/tv/xtreams/:id/search`, `/tv/xtreams/:id/detail/:type/:itemId` — `libs/workspace/tv-shell/feature/src/lib/routes/tv-shell.routes.ts`. See "TV Shell" below and `docs/architecture/tv-shell.md`
 
 **Service Architecture** (Factory Pattern):
 
@@ -1471,6 +1474,38 @@ stream_id`); it drops `series_id`/`movie_id`, so the builder pins the
 
 - Per-playlist favorites and global favorites
 - Recently viewed tracks watch history
+
+**TV Shell** (10-foot HTPC UI, `/tv`):
+
+- A parallel route tree beside `/workspace`, operable from a simple remote
+  (arrows, OK, Back only). Reuses `XtreamStore` and `PlayerController`
+  unchanged — no new store, no new persistence. Xtream only in v1; one
+  profile, no multi-user state.
+- Three activation paths land on `/tv`: the `--tv` CLI flag (Electron),
+  a `tv` startup-preference option, and a Settings toggle. Kiosk mode
+  (`ElectronBridgeApi.setKioskMode`) is Electron-only; the shell itself
+  renders in the PWA too.
+- Focus primitives live in `@iptvnator/ui/tv-navigation` (project
+  `ui-tv-navigation`): `TvFocusGroupDirective`/`TvFocusableDirective` plus
+  `TvFocusService`, whose `activeElement()` is the sole authority on what is
+  focused (never query `.tv-focused` — CDK overlays render outside the
+  shell's DOM subtree). Move arithmetic is pure/DOM-free
+  (`tv-focus-geometry.ts`, `tv-focus-graph.ts`).
+- All key handling is centralized in one `@HostListener('keydown')` on
+  `TvShellComponent` — no screen or overlay attaches its own listener.
+  While a playback session is mounted, the same six keys mean something
+  different (OK toggles play/pause, Left/Right seek, Up/Down change channel
+  live) via `tv-playback-key-intent.util.ts`.
+- Engine chain for playback: Embedded MPV frame-copy when a runtime probe
+  confirms it, else `HtmlVideoPlayerComponent`. Native-view Embedded MPV and
+  external MPV/VLC are excluded unconditionally — both composite above the
+  DOM and cannot carry overlay UI.
+- The movies/series poster grid and the on-screen keyboard's results grid
+  render only the store's current `visibleCount` window and grow it via
+  focus-driven `loadMore`, so the DOM never holds a full 40,000-title
+  catalogue at once.
+- Full contract, known limitations, and the shared per-playlist bootstrap
+  session: `docs/architecture/tv-shell.md`.
 
 **Internationalization**:
 

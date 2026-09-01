@@ -18,7 +18,6 @@ import {
     XtreamStore,
     type XtreamCredentials,
 } from '@iptvnator/portal/xtream/data-access';
-import type { XtreamLiveStream } from '@iptvnator/shared/interfaces';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import type { PlayerMediaTitle } from '@iptvnator/ui/playback';
 import {
@@ -38,6 +37,8 @@ import {
     buildTvEpgGridRow,
     resolveTvZapTarget,
     toEpgProgrammeSummary,
+    toTvLiveChannel,
+    type TvLiveChannelSource,
 } from './tv-live-screen.util';
 
 const CHANNEL_BAR_GROUP_ID = 'tv-live-channel-bar';
@@ -109,8 +110,11 @@ export class TvLiveScreenComponent {
     private idleTimer: ReturnType<typeof setTimeout> | null = null;
     private lastBootstrappedPlaylistId: string | null = null;
 
-    protected readonly channels = computed<XtreamLiveStream[]>(
-        () => this.store.selectItemsFromSelectedCategory() as XtreamLiveStream[]
+    protected readonly channels = computed<TvLiveChannelSource[]>(() =>
+        this.store
+            .selectItemsFromSelectedCategory()
+            .map(toTvLiveChannel)
+            .filter((channel): channel is TvLiveChannelSource => channel !== null)
     );
     protected readonly channelBarItems = computed<TvChannelBarItem[]>(() =>
         buildTvChannelBarItems(this.channels())
@@ -312,7 +316,7 @@ export class TvLiveScreenComponent {
         }
     }
 
-    private tuneChannel(channel: XtreamLiveStream): void {
+    private tuneChannel(channel: TvLiveChannelSource): void {
         const id = resolveChannelId(channel);
         this.playingChannelId.set(id);
         this.store.constructStreamUrl({ ...channel, xtream_id: id });
@@ -357,6 +361,6 @@ export class TvLiveScreenComponent {
     }
 }
 
-function resolveChannelId(stream: XtreamLiveStream): number {
+function resolveChannelId(stream: TvLiveChannelSource): number {
     return Number(stream.xtream_id ?? stream.stream_id);
 }

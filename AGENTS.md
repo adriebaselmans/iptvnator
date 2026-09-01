@@ -658,6 +658,30 @@ Key files:
   `docs/architecture/embedded-mpv-native.md` and
   `tools/embedded-mpv/README.md`.
 
+## TV Shell
+
+- A parallel `/tv` route tree beside `/workspace` (10-foot HTPC UI, operable
+  from arrows/OK/Back only). New projects: `ui-tv-navigation`
+  (`libs/ui/tv-navigation`, focus primitives, no store dependency),
+  `workspace-tv-shell-ui` (`libs/workspace/tv-shell/ui`, presentational
+  components), `workspace-tv-shell-feature`
+  (`libs/workspace/tv-shell/feature`, routed screens + shell). Routes:
+  `libs/workspace/tv-shell/feature/src/lib/routes/tv-shell.routes.ts`.
+- **Key handling has exactly one owner**: `TvShellComponent`'s single
+  `@HostListener('keydown')`. Never attach a keydown listener anywhere else
+  in this route tree — screens and overlays translate to intents that the
+  shell dispatches, not the other way round.
+- **`TvFocusService.activeElement()` is the only correct way to find the
+  focused element** — never query a subtree for `.tv-focused`; CDK overlays
+  render into `document.body`, outside the shell's own DOM subtree, so a
+  subtree query silently finds nothing while a modal/overlay is open.
+- Embedded MPV native-view and external MPV/VLC are excluded from TV
+  playback unconditionally (they composite above the DOM, so no overlay can
+  survive); the engine chain is frame-copy MPV when a runtime probe confirms
+  it, else the web engine.
+- Full contract, focus-primitive internals, and known limitations:
+  `docs/architecture/tv-shell.md`.
+
 ## Repo Skills
 
 - `.codex/skills/iptvnator-nx-architecture/SKILL.md`

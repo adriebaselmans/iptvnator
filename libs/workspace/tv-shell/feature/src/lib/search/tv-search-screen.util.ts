@@ -6,7 +6,7 @@ export interface TvSearchSourceItem {
     readonly id?: string | number;
     readonly title: string;
     readonly type: string;
-    readonly poster_url?: string;
+    readonly poster_url?: string | null;
 }
 
 export interface TvSearchResultItem extends TvPosterGridItem {
@@ -53,7 +53,7 @@ export function toTvSearchResultItem(
     return {
         id: itemId,
         title: item.title,
-        posterUrl: item.poster_url,
+        posterUrl: item.poster_url ?? undefined,
         route: buildRoute(playlistId, item.type, itemId),
     };
 }

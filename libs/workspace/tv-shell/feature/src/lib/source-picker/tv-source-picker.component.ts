@@ -14,6 +14,12 @@ import { Store } from '@ngrx/store';
 import { TranslateModule } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
+type XtreamAccountPlaylistMeta = PlaylistMeta & {
+    serverUrl: string;
+    username: string;
+    password: string;
+};
+
 /**
  * `/tv` — lists Xtream sources as focusable cards (§7.1). With exactly one
  * Xtream source, redirects straight to its home screen so a single-source
@@ -39,7 +45,7 @@ export class TvSourcePickerComponent {
         this.store.select(selectAllPlaylistsMeta).pipe(
             map((playlists) => playlists.filter(isXtreamAccountPlaylist))
         ),
-        { initialValue: [] as PlaylistMeta[] }
+        { initialValue: [] as XtreamAccountPlaylistMeta[] }
     );
 
     constructor() {
