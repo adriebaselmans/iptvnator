@@ -8,6 +8,7 @@ import {
     tvHomeRailGroupId,
     tvHomeRailTitleKey,
     TV_HOME_HERO_GROUP_ID,
+    TV_HOME_NAV_GROUP_ID,
     type TvHomeNavigableRailItem,
     type TvHomeSourceItem,
 } from './tv-home-screen.util';
@@ -221,7 +222,7 @@ function railItem(id: string): TvHomeNavigableRailItem {
 }
 
 describe('buildTvHomeLayout', () => {
-    it('drops empty rails entirely and chains only the visible groups', () => {
+    it('drops empty rails entirely and chains only the visible groups, with the nav row always on top', () => {
         const layout = buildTvHomeLayout(true, [
             { kind: 'continue-watching', items: [railItem('a')] },
             { kind: 'recently-added', items: [] },
@@ -232,7 +233,11 @@ describe('buildTvHomeLayout', () => {
             'continue-watching',
             'favourites',
         ]);
+        expect(layout.navNeighbours).toEqual({
+            down: TV_HOME_HERO_GROUP_ID,
+        });
         expect(layout.heroNeighbours).toEqual({
+            up: TV_HOME_NAV_GROUP_ID,
             down: tvHomeRailGroupId('continue-watching'),
         });
         expect(layout.rails[0].neighbours).toEqual({
@@ -244,19 +249,23 @@ describe('buildTvHomeLayout', () => {
         });
     });
 
-    it('has no hero neighbours when there is no hero', () => {
+    it('has no hero neighbours when there is no hero, and the nav row still leads into the first rail', () => {
         const layout = buildTvHomeLayout(false, [
             { kind: 'favourites', items: [railItem('a')] },
         ]);
         expect(layout.heroNeighbours).toBeNull();
-        expect(layout.rails[0].neighbours).toEqual({});
+        expect(layout.navNeighbours).toEqual({
+            down: tvHomeRailGroupId('favourites'),
+        });
+        expect(layout.rails[0].neighbours).toEqual({ up: TV_HOME_NAV_GROUP_ID });
     });
 
-    it('an all-empty layout with no hero produces no groups', () => {
+    it('an all-empty layout with no hero produces no rail groups, but the nav row is unconditional', () => {
         const layout = buildTvHomeLayout(false, [
             { kind: 'favourites', items: [] },
         ]);
         expect(layout.rails).toEqual([]);
         expect(layout.heroNeighbours).toBeNull();
+        expect(layout.navNeighbours).toEqual({});
     });
 });

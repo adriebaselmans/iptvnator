@@ -1,3 +1,10 @@
+<lib-tv-nav-bar
+    [tvFocusGroup]="navGroupId"
+    [neighbours]="navNeighbours"
+    [items]="navItems()"
+    [activeId]="navActiveId()"
+    (itemActivated)="onNavItemActivated($event)"
+/>
 <h1 class="tv-catalog-screen__title">{{ titleKey() | translate }}</h1>
 
 @if (errorReason()) {

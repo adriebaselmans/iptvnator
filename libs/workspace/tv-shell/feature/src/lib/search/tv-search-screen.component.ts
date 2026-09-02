@@ -12,18 +12,26 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { map } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { map, startWith } from 'rxjs';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
 import { DataService, resetHostConnectivityGuard } from '@iptvnator/services';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import {
     TvCatalogStateComponent,
     TvKeyboardComponent,
+    TvNavBarComponent,
     TvPosterGridComponent,
     computeTvGridColumnCount,
+    type TvNavBarItem,
     type TvPosterGridItem,
 } from '@iptvnator/workspace/tv-shell/ui';
+import {
+    TV_NAV_GROUP_ID,
+    tvNavRoute,
+    tvNavSections,
+    type TvNavSectionId,
+} from '../nav/tv-nav-bar.util';
 import { TvPlaylistSessionService } from '../session/tv-playlist-session.service';
 import {
     applyTvKeyboardBackspace,
@@ -61,6 +69,7 @@ const SEARCH_DEBOUNCE_MS = 300;
         TranslateModule,
         TvCatalogStateComponent,
         TvKeyboardComponent,
+        TvNavBarComponent,
         TvPosterGridComponent,
     ],
     templateUrl: './tv-search-screen.component.html',
@@ -73,6 +82,7 @@ export class TvSearchScreenComponent {
     private readonly router = inject(Router);
     protected readonly store = inject(XtreamStore);
     private readonly session = inject(TvPlaylistSessionService);
+    private readonly translate = inject(TranslateService);
     private readonly focusService = inject(TvFocusService);
     private readonly dataService = inject(DataService);
     private readonly destroyRef = inject(DestroyRef);
@@ -80,6 +90,20 @@ export class TvSearchScreenComponent {
     protected readonly keyboardGroupId = KEYBOARD_GROUP_ID;
     protected readonly resultsGroupId = RESULTS_GROUP_ID;
     protected readonly retryGroupId = RETRY_GROUP_ID;
+    protected readonly navGroupId = TV_NAV_GROUP_ID;
+    protected readonly navNeighbours = { down: KEYBOARD_GROUP_ID } as const;
+
+    private readonly languageTick = toSignal(
+        this.translate.onLangChange.pipe(startWith(null)),
+        { initialValue: null }
+    );
+    protected readonly navItems = computed<TvNavBarItem[]>(() => {
+        this.languageTick();
+        return tvNavSections().map((section) => ({
+            id: section.id,
+            label: this.translate.instant(section.labelKey),
+        }));
+    });
 
     private readonly gridHost = viewChild<ElementRef<HTMLElement>>('gridHost');
     protected readonly columnCount = signal(computeTvGridColumnCount(0));
@@ -114,9 +138,10 @@ export class TvSearchScreenComponent {
     );
 
     protected readonly keyboardNeighbours = computed(() => {
-        if (this.hasError()) return { down: RETRY_GROUP_ID };
-        if (this.results().length > 0) return { down: RESULTS_GROUP_ID };
-        return {};
+        const up = { up: TV_NAV_GROUP_ID } as const;
+        if (this.hasError()) return { ...up, down: RETRY_GROUP_ID };
+        if (this.results().length > 0) return { ...up, down: RESULTS_GROUP_ID };
+        return up;
     });
     protected readonly resultsNeighbours = { up: KEYBOARD_GROUP_ID } as const;
 
@@ -150,18 +175,26 @@ export class TvSearchScreenComponent {
         });
 
         // The keyboard group registers itself during the children's own
-        // `ngOnInit`, which runs after this constructor — deferred to an
-        // effect (like every other screen's initial-focus effect) so the
-        // group actually exists by the time `setActive` looks it up.
+        // `ngOnInit`, which runs after this constructor. Found chasing a
+        // real E2E failure (`tv-keyboard-only.e2e.ts`): a tracked read of
+        // `isBootstrapping()` (hoping its false -> true -> false transition
+        // forces a second run after the keyboard group has registered) does
+        // not actually close the race — Angular flushes effects BEFORE
+        // change detection runs, so nothing guarantees the keyboard's
+        // `TvFocusGroupDirective.ngOnInit()` has executed by either flush.
+        // `TvFocusService.setActive()` then silently no-ops against an
+        // unregistered group (by design — see `tv-focus.service.spec.ts`,
+        // "setActive is a no-op for an unregistered group"), `queueMicrotask`
+        // defers the actual call past that change-detection pass instead,
+        // same fix as the catalog/home screens' initial-focus effects and
+        // the detail screen's and source picker's original ones.
         effect(() => {
-            // Tracked read: guarantees at least one re-run after the initial
-            // one (bootstrapping flips false → true → false), in case the
-            // very first run raced the keyboard group's own registration.
-            this.isBootstrapping();
             if (this.hasSetInitialFocus) return;
+            this.hasSetInitialFocus = true;
             untracked(() => {
-                this.hasSetInitialFocus = true;
-                this.focusService.setActive(KEYBOARD_GROUP_ID, 0);
+                queueMicrotask(() =>
+                    this.focusService.setActive(KEYBOARD_GROUP_ID, 0)
+                );
             });
         });
 
@@ -196,6 +229,12 @@ export class TvSearchScreenComponent {
 
     protected onCleared(): void {
         this.query.set('');
+    }
+
+    protected onNavItemActivated(sectionId: string): void {
+        void this.router.navigate([
+            ...tvNavRoute(sectionId as TvNavSectionId, this.playlistId()),
+        ]);
     }
 
     protected onResultActivated(item: TvPosterGridItem): void {

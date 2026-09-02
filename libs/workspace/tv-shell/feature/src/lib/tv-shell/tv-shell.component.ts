@@ -2,7 +2,9 @@ import { Location } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     Component,
+    ElementRef,
     HostListener,
+    effect,
     inject,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
@@ -29,12 +31,35 @@ import {
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         class: 'tv-shell',
+        tabindex: '-1',
     },
 })
 export class TvShellComponent {
     private readonly focusService = inject(TvFocusService);
     private readonly location = inject(Location);
     private readonly playbackSession = inject(TvPlaybackSessionService);
+    private readonly elementRef =
+        inject<ElementRef<HTMLElement>>(ElementRef);
+
+    constructor() {
+        // The shell root is the DOM focus holder of last resort: before any
+        // screen's `tvFocusGroup` has claimed an active item (first paint,
+        // and the gap between one screen tearing its groups down on
+        // navigation and the next screen registering its own), nothing
+        // else holds real DOM focus. Left unhandled, `document.activeElement`
+        // falls back to `<body>` — an ancestor of this component, not a
+        // descendant — so a real keydown never bubbles into this listener
+        // at all. `TvFocusableDirective` moves focus onto the active item
+        // once one exists; this effect reclaims it here whenever none does.
+        effect(() => {
+            if (!this.focusService.activeElement()) {
+                const element = this.elementRef.nativeElement;
+                if (document.activeElement !== element) {
+                    element.focus({ preventScroll: true });
+                }
+            }
+        });
+    }
 
     @HostListener('keydown', ['$event'])
     onKeydown(event: KeyboardEvent): void {

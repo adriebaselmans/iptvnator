@@ -19,10 +19,18 @@ import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import {
     TvCatalogStateComponent,
     TvCategoryRailComponent,
+    TvNavBarComponent,
     TvPosterGridComponent,
     computeTvGridColumnCount,
+    type TvNavBarItem,
     type TvPosterGridItem,
 } from '@iptvnator/workspace/tv-shell/ui';
+import {
+    TV_NAV_GROUP_ID,
+    tvNavRoute,
+    tvNavSections,
+    type TvNavSectionId,
+} from '../nav/tv-nav-bar.util';
 import { TvPlaylistSessionService } from '../session/tv-playlist-session.service';
 import {
     buildTvCategoryRailItems,
@@ -46,6 +54,7 @@ const GRID_GROUP_ID = 'tv-catalog-grid';
         TranslateModule,
         TvCatalogStateComponent,
         TvCategoryRailComponent,
+        TvNavBarComponent,
         TvPosterGridComponent,
     ],
     templateUrl: './tv-catalog-screen.component.html',
@@ -66,7 +75,12 @@ export class TvCatalogScreenComponent {
 
     protected readonly railGroupId = RAIL_GROUP_ID;
     protected readonly gridGroupId = GRID_GROUP_ID;
-    protected readonly railNeighbours = { down: GRID_GROUP_ID } as const;
+    protected readonly navGroupId = TV_NAV_GROUP_ID;
+    protected readonly navNeighbours = { down: RAIL_GROUP_ID } as const;
+    protected readonly railNeighbours = {
+        up: TV_NAV_GROUP_ID,
+        down: GRID_GROUP_ID,
+    } as const;
     protected readonly gridNeighbours = { up: RAIL_GROUP_ID } as const;
 
     private readonly gridHost =
@@ -104,6 +118,16 @@ export class TvCatalogScreenComponent {
     protected readonly selectedCategoryId = computed(() =>
         this.store.selectedCategoryId()
     );
+    protected readonly navActiveId = computed<TvNavSectionId>(() =>
+        this.contentType() === 'vod' ? 'movies' : 'series'
+    );
+    protected readonly navItems = computed<TvNavBarItem[]>(() => {
+        this.languageTick();
+        return tvNavSections().map((section) => ({
+            id: section.id,
+            label: this.translate.instant(section.labelKey),
+        }));
+    });
     protected readonly railItems = computed(() => {
         this.languageTick();
         return buildTvCategoryRailItems(
@@ -153,6 +177,21 @@ export class TvCatalogScreenComponent {
             });
         });
 
+        // Found chasing a real E2E failure (`tv-catalog-scale.e2e.ts`): data
+        // readiness alone races the view, same defect as the detail screen's
+        // and source picker's initial-focus effects document above their own
+        // `queueMicrotask()`. Angular flushes effects BEFORE change detection
+        // runs, so on the flush where these gating signals first read ready,
+        // the rail's `TvFocusGroupDirective` (registered from its own
+        // `ngOnInit`, in the same `@else` branch) has not necessarily run
+        // yet. `TvFocusService.setActive()` silently no-ops against a group
+        // that has not called `registerGroup()` yet (by design — see
+        // `tv-focus.service.spec.ts`, "setActive is a no-op for an
+        // unregistered group"), and none of this effect's other dependencies
+        // change again on their own, so a `setActive` that loses that race
+        // never gets a retry and the screen is permanently unfocusable from
+        // a remote. `queueMicrotask` defers the actual call past that
+        // change-detection pass, exactly like the other two screens.
         effect(() => {
             if (this.hasSetInitialFocus) {
                 return;
@@ -163,9 +202,11 @@ export class TvCatalogScreenComponent {
             if (this.gridItems().length === 0 && this.railItems().length <= 1) {
                 return;
             }
+            this.hasSetInitialFocus = true;
             untracked(() => {
-                this.hasSetInitialFocus = true;
-                this.focusService.setActive(RAIL_GROUP_ID, 0);
+                queueMicrotask(() =>
+                    this.focusService.setActive(RAIL_GROUP_ID, 0)
+                );
             });
         });
 
@@ -203,6 +244,12 @@ export class TvCatalogScreenComponent {
 
     protected onCategorySelected(categoryId: number | null): void {
         this.store.setSelectedCategory(categoryId);
+    }
+
+    protected onNavItemActivated(sectionId: string): void {
+        void this.router.navigate([
+            ...tvNavRoute(sectionId as TvNavSectionId, this.playlistId()),
+        ]);
     }
 
     protected onItemActivated(item: TvPosterGridItem): void {

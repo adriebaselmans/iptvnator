@@ -1,0 +1,11 @@
+@for (item of items(); track trackById($index, item)) {
+    <button
+        type="button"
+        tvFocusable
+        class="tv-nav-bar__item"
+        [class.tv-nav-bar__item--active]="item.id === activeId()"
+        (click)="itemActivated.emit(item.id)"
+    >
+        {{ item.label }}
+    </button>
+}

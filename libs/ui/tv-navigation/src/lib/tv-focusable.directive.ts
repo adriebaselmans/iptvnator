@@ -56,13 +56,35 @@ export class TvFocusableDirective implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            if (this.isActive()) {
-                // Guard for environments without scrollIntoView (e.g. jsdom).
-                this.elementRef.nativeElement.scrollIntoView?.({
-                    block: 'nearest',
-                    inline: 'nearest',
-                });
+            if (!this.isActive()) {
+                return;
             }
+            const element = this.elementRef.nativeElement;
+
+            // `@HostBinding('attr.tabindex')` above reflects `isActive()`
+            // too, but effects are not guaranteed to run after Angular has
+            // applied host bindings for this same change-detection pass.
+            // Set it directly here so the element is guaranteed focusable
+            // at the moment `focus()` is called below.
+            element.tabIndex = 0;
+
+            // Real DOM focus must follow the service's notion of "active",
+            // or `document.activeElement` never leaves whatever last held
+            // it (e.g. `<body>`) and a real keydown — which bubbles from
+            // the focused element, not from wherever this directive lives
+            // in the tree — never reaches the shell's listener. Skip when
+            // already focused so we don't fight the browser (e.g. re-firing
+            // this effect for an unrelated reason while the user is still
+            // on this element).
+            if (document.activeElement !== element) {
+                element.focus({ preventScroll: true });
+            }
+
+            // Guard for environments without scrollIntoView (e.g. jsdom).
+            element.scrollIntoView?.({
+                block: 'nearest',
+                inline: 'nearest',
+            });
         });
     }
 

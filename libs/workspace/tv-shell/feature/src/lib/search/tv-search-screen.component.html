@@ -1,3 +1,11 @@
+<lib-tv-nav-bar
+    [tvFocusGroup]="navGroupId"
+    [neighbours]="navNeighbours"
+    [items]="navItems()"
+    activeId="search"
+    (itemActivated)="onNavItemActivated($event)"
+/>
+
 <div class="tv-search-screen__keyboard-pane">
     <div class="tv-search-screen__query">
         @if (query()) {

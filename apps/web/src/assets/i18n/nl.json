@@ -1646,6 +1646,13 @@
             "TITLE": "Choose a source",
             "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
         },
+        "NAV": {
+            "HOME": "Home",
+            "LIVE": "Live",
+            "MOVIES": "Movies",
+            "SERIES": "Series",
+            "SEARCH": "Search"
+        },
         "PLACEHOLDER": {
             "TITLE": "{{screen}} is coming soon",
             "SUBTITLE": "This screen is not built yet."

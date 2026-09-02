@@ -1,5 +1,6 @@
 import type { CatalogTitleMatch, PortalActivityType } from '@iptvnator/shared/interfaces';
 import type { TvHomeRailItem } from '@iptvnator/workspace/tv-shell/ui';
+import { TV_NAV_GROUP_ID } from '../nav/tv-nav-bar.util';
 
 /** Rails shown on the home screen (§7.2), in display order. */
 export type TvHomeRailKind =
@@ -12,6 +13,8 @@ export type TvHomeRailKind =
 
 const TV_HOME_RAIL_GROUP_PREFIX = 'tv-home-rail';
 export const TV_HOME_HERO_GROUP_ID = 'tv-home-hero';
+/** Re-exported for the template/screen: the shared nav row's group id. */
+export const TV_HOME_NAV_GROUP_ID = TV_NAV_GROUP_ID;
 
 export function tvHomeRailGroupId(kind: TvHomeRailKind): string {
     return `${TV_HOME_RAIL_GROUP_PREFIX}-${kind}`;
@@ -217,15 +220,19 @@ export interface TvHomeVisibleRail extends TvHomeRailSection {
 }
 
 export interface TvHomeLayout {
+    readonly navNeighbours: TvHomeGroupNeighbours;
     readonly heroNeighbours: TvHomeGroupNeighbours | null;
     readonly rails: readonly TvHomeVisibleRail[];
 }
 
 /**
- * Builds the home screen's vertical group stack: the hero (if present) above
+ * Builds the home screen's vertical group stack: the persistent nav row
+ * (design correction #18) always on top, then the hero (if present) above
  * every non-empty rail, in the order the sections were given. Absent/empty
  * rails simply do not appear — their neighbour slots are never left dangling
- * because the chain is rebuilt from exactly what is visible.
+ * because the chain is rebuilt from exactly what is visible. The nav row is
+ * unconditional (unlike the hero/rails) so Up from the topmost content group
+ * always reaches it, even when nothing else is visible yet.
  */
 export function buildTvHomeLayout(
     hasHero: boolean,
@@ -233,12 +240,14 @@ export function buildTvHomeLayout(
 ): TvHomeLayout {
     const visible = sections.filter((section) => section.items.length > 0);
     const groupIds = [
+        TV_HOME_NAV_GROUP_ID,
         ...(hasHero ? [TV_HOME_HERO_GROUP_ID] : []),
         ...visible.map((section) => tvHomeRailGroupId(section.kind)),
     ];
     const chain = buildTvHomeNeighbourChain(groupIds);
 
     return {
+        navNeighbours: chain.get(TV_HOME_NAV_GROUP_ID) ?? {},
         heroNeighbours: hasHero
             ? (chain.get(TV_HOME_HERO_GROUP_ID) ?? {})
             : null,

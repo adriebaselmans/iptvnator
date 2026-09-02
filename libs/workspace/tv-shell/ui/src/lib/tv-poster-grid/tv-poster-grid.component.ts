@@ -59,6 +59,20 @@ export class TvPosterGridComponent {
     readonly itemActivated = output<TvPosterGridItem>();
     readonly loadMoreRequested = output<void>();
 
+    /**
+     * The item count `loadMoreRequested` was last emitted for. `appending`
+     * cannot guard re-entry here (documented open item, `STATE-tv-shell.md`:
+     * `XtreamStore.loadMoreContent()` grows its slice synchronously, so the
+     * input never actually observes an in-flight state) — without this,
+     * every `ArrowDown` that lands while the active index is still in the
+     * *previous* window's last row (real remote input arrives faster than a
+     * single Angular change-detection tick turns one `loadMoreRequested`
+     * into a bigger `items()` array) re-satisfies the same arrival check and
+     * re-emits, compounding far past one chunk per genuine arrival. Once
+     * `items()` actually grows, the guard clears itself.
+     */
+    private lastRequestedItemCount = -1;
+
     constructor() {
         effect(() => {
             if (this.focusService.activeGroupId() !== this.group.id) {
@@ -66,7 +80,12 @@ export class TvPosterGridComponent {
             }
 
             const itemCount = this.items().length;
-            if (itemCount === 0 || this.appending() || !this.hasMore()) {
+            if (
+                itemCount === 0 ||
+                this.appending() ||
+                !this.hasMore() ||
+                itemCount === this.lastRequestedItemCount
+            ) {
                 return;
             }
 
@@ -75,6 +94,7 @@ export class TvPosterGridComponent {
             const lastRowStart = Math.floor((itemCount - 1) / columns) * columns;
 
             if (activeIndex >= lastRowStart) {
+                this.lastRequestedItemCount = itemCount;
                 this.loadMoreRequested.emit();
             }
         });

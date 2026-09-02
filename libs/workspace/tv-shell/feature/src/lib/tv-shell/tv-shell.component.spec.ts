@@ -8,12 +8,27 @@ import {
 } from '../playback/tv-playback-session.service';
 import { TvShellComponent } from './tv-shell.component';
 
+/**
+ * Dispatches the way a browser genuinely delivers a keypress: on whatever
+ * currently holds real DOM focus, letting it bubble up to the shell's
+ * `@HostListener('keydown')`. Dispatching directly on
+ * `fixture.nativeElement` (the shell host) used to make this suite pass
+ * regardless of whether anything in the shell ever moved real focus there —
+ * `fixture.nativeElement` *is* the listener's own element, so the dispatch
+ * always "worked" even when the shell never called `.focus()` on anything
+ * and a real keydown targeting `<body>` would never have bubbled down into
+ * it. Falls back to the shell root only if literally nothing is focused.
+ */
 function dispatchKeydown(
     fixture: ComponentFixture<TvShellComponent>,
     key: string
 ): KeyboardEvent {
-    const event = new KeyboardEvent('keydown', { key, cancelable: true });
-    fixture.nativeElement.dispatchEvent(event);
+    const event = new KeyboardEvent('keydown', {
+        key,
+        bubbles: true,
+        cancelable: true,
+    });
+    (document.activeElement ?? fixture.nativeElement).dispatchEvent(event);
     return event;
 }
 

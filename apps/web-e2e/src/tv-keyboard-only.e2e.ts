@@ -57,8 +57,49 @@ test('@tv source pick, browse, search, detail, play, back — keyboard only', as
         params: { username: USERNAME, password: PASSWORD, action: 'get_vod_streams' },
     });
     expect(vodResponse.ok()).toBe(true);
-    const vodStreams = (await vodResponse.json()) as Array<{ name: string }>;
-    const searchQuery = extractSearchableSubstring(vodStreams[0].name);
+    // The `/xtream` route mirrors the app's own CORS-proxy shape
+    // (`dispatchProxyAction` in the mock server) — the array sits under
+    // `.payload`, exactly like `xtream.e2e.ts` already reads it.
+    const vodBody = (await vodResponse.json()) as {
+        payload: Array<{ name: string }>;
+    };
+
+    // The search screen's `TV_SEARCH_TYPES` genuinely includes `live`
+    // alongside `movie`/`series` (§7.6) — a live channel whose generated
+    // name happens to share the chosen substring is a real, valid search
+    // result, and it legitimately routes to `/live` instead of a detail page
+    // (`buildRoute` in `tv-search-screen.util.ts`), landing ahead of the
+    // intended movie whenever the mock's deterministic generator ranks it
+    // first. Picking a substring straight off `payload[0]` risked exactly
+    // that collision. Instead, verify the candidate substring appears in NO
+    // live channel or series name before committing to it, so the keyboard
+    // journey below is guaranteed to land on the movie it typed for.
+    const liveResponse = await request.get(`${MOCK_SERVER}/xtream`, {
+        params: { username: USERNAME, password: PASSWORD, action: 'get_live_streams' },
+    });
+    const seriesResponse = await request.get(`${MOCK_SERVER}/xtream`, {
+        params: { username: USERNAME, password: PASSWORD, action: 'get_series' },
+    });
+    const liveBody = (await liveResponse.json()) as {
+        payload: Array<{ name: string }>;
+    };
+    const seriesBody = (await seriesResponse.json()) as {
+        payload: Array<{ name: string }>;
+    };
+    const otherNames = [...liveBody.payload, ...seriesBody.payload].map((item) =>
+        item.name.toLowerCase()
+    );
+
+    const targetMovie = vodBody.payload.find((movie) => {
+        const candidate = extractSearchableSubstring(movie.name);
+        return !otherNames.some((name) => name.includes(candidate));
+    });
+    if (!targetMovie) {
+        throw new Error(
+            'No VOD title in the seeded fixture has a search substring free of live/series collisions.'
+        );
+    }
+    const searchQuery = extractSearchableSubstring(targetMovie.name);
 
     // --- Setup (not part of the keyboard-only assertion — see file docblock) ---
     await addXtreamPortal(page, { username: USERNAME, password: PASSWORD });

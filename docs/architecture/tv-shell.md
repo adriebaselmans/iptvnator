@@ -47,6 +47,57 @@ Settings toggle. All three land on `/tv`, where the source picker either
 lists sources or — with exactly one Xtream source — redirects straight to its
 home screen without any input (design §7.1).
 
+## Persistent navigation and reachability
+
+**Every screen sets initial focus, and Home/Movies/Series/Search carry a
+persistent top nav row.** Two gaps here were tracked as corrections #17/#18
+(source picker/Home→Movies-Series-Search) plus a third found during the same
+audit (the detail screen) — all closed, all with regression coverage that
+fails against the pre-fix code:
+
+- **`TvNavBarComponent`** (`libs/workspace/tv-shell/ui/src/lib/tv-nav-bar/`)
+  is a plain `row` focus group of section entries, rendered above a screen's
+  own content. `Home`, `Movies`/`Series` (the shared catalogue screen) and
+  `Search` render it; the current section stays focusable like any other
+  entry (§6.4 — no hidden or disabled affordances), and Up from the topmost
+  content group reaches it while Down returns. Group ids and translated
+  labels are built once in
+  `libs/workspace/tv-shell/feature/src/lib/nav/tv-nav-bar.util.ts`
+  (`tvNavSections()`/`tvNavRoute()`), shared by every screen that renders the
+  row so the group id cannot drift between them.
+- **Live does not carry the nav row.** It is fullscreen playback where OK and
+  Up/Down are already claimed by the live key-intent mapping (§9.2/§7.3) —
+  OK opens the channel bar, Up/Down changes channel instead of seeking. A
+  competing focus group there would fight the mounted playback session for
+  the key stream, the exact conflict design correction #12 exists to avoid.
+  Back already returns to Home in one press, which is where the row lives;
+  this was judged sufficient without extending the six-key surface Live
+  already has to reconcile.
+- **Every screen now calls `TvFocusService.setActive()`.** The source picker
+  (§7.1) and the detail screen (§7.5) did not: both looked reachable in
+  every manual/E2E check made so far because the only configuration that
+  exercises them is the one where focus never matters — a single-source
+  household (the picker redirects before its cards would need focus) and,
+  for detail, the fact that `TvFocusService.unregisterGroup()` nulls the
+  active group on every screen teardown, so "arrives unfocused" is the
+  default outcome, not an edge case that needed provoking. On the detail
+  screen, focus lands on the action row's first entry — Play/Resume when the
+  item is playable, since §6.4 only ever renders actions the item actually
+  supports, so index 0 is always the primary one available.
+- **The DOM-registration race behind both fixes.** Angular flushes
+  constructor-registered `effect()`s *before* the change-detection pass that
+  runs child `ngOnInit`s (`ComponentFixture.detectChanges()` /
+  `ApplicationRef.tick()` call `EffectScheduler.flush()` first). Both fixes'
+  gating signals can already read as "ready" on that first flush — the
+  source list resolving synchronously from a store selector, or the detail
+  item's loading/error/empty signals settling — while the group they target
+  has not registered yet. `queueMicrotask()` defers the actual
+  `setActive()` call past that synchronous change-detection pass, which is
+  enough: the group is registered by the time the microtask runs. This is a
+  different hazard from Home/Movies-Series/Search's own initial-focus
+  effects, which happen to re-run naturally because their gating signals
+  (an async store bootstrap) genuinely change value after the first render.
+
 ## The six-key vocabulary and who owns it
 
 | Key | Meaning |
@@ -261,37 +312,13 @@ Run targeted first: `nx test ui-tv-navigation`, `nx test workspace-tv-shell-feat
 
 ## Known limitations
 
-Found while writing this document and the Phase 7 E2E coverage. Reported
-here rather than fixed, per the standing rule that a phase does not change TV
-shell behaviour it merely documents or tests (see the Phase 7 report in
-`.plans/STATE-tv-shell.md` for full detail):
+The only open one is `EmbeddedMpvPlayerComponent`'s own non-focusable
+loading/stalled/error Retry, documented under "The engine chain" above.
 
-- **No in-app navigation from Home to Movies, Series or Search.** The shell
-  has no persistent navigation surface, and the home screen's rails only
-  route to detail pages and live — never to the catalogue or search screens
-  themselves. A remote-only user cannot reach `/tv/xtreams/:id/movies`,
-  `/series` or `/search` at all once past the home screen, short of typing a
-  URL, which a six-key remote cannot do. This is a real gap against design
-  §4's "100% of interactive elements reachable with arrows/OK/Back" and
-  design §2's success criteria (browse the catalogues, search by title).
-- **The multi-source source picker never sets initial focus.**
-  `TvSourcePickerComponent` renders a `tvFocusGroup` of source cards but
-  never calls `TvFocusService.setActive()`. With more than one Xtream
-  source, `activeGroupId()` stays `null` on that screen, `TvFocusService.move()`
-  no-ops when there is no active group, and OK activates nothing — so the
-  picker is completely unreachable from a remote whenever there is more than
-  one source to pick from. (With exactly one source this never surfaces,
-  because the screen redirects before anything needs focusing — which is why
-  it was not caught by earlier phases' single-source-only manual checks.)
-- **`nx build web` and `nx serve web` currently fail to compile** with six
-  TypeScript errors across `tv-home-screen-state.ts`,
-  `tv-live-screen.component.ts`, `tv-search-screen.component.ts` and
-  `tv-source-picker.component.ts` (type mismatches between store/dashboard
-  item shapes and the TV shell's narrower view-model types, plus two
-  `toSignal()`/`PlaylistMeta` optionality mismatches). `nx test`/`nx lint`
-  for the affected projects pass, because neither runs the Angular AOT
-  template compiler the production/dev-server build does — which is why this
-  was not caught by any Phase 2–6 validation command. This blocks any real
-  browser from serving the app at all right now, including every `web-e2e`
-  Playwright run. Full detail and the exact errors: the Phase 7 report in
-  `.plans/STATE-tv-shell.md`.
+Every gap previously tracked here — no in-app navigation from Home to
+Movies/Series/Search, and the multi-source source picker never setting
+initial focus (plus a third found in the same audit: the detail screen had
+the identical gap) — is now fixed; see "Persistent navigation and
+reachability" above and `.plans/STATE-tv-shell.md` corrections #17/#18 for
+the history. `nx build web`/`nx serve web` compile cleanly as of the commit
+that added this document (`.plans/STATE-tv-shell.md` correction #16).

@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
 import { DataService, DownloadsService } from '@iptvnator/services';
 import { CONNECTIVITY_GUARD_RESET } from '@iptvnator/shared/interfaces';
+import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import { TvPlaylistSessionService } from '../session/tv-playlist-session.service';
 import { TvDetailScreenComponent } from './tv-detail-screen.component';
 
@@ -385,6 +386,34 @@ describe('TvDetailScreenComponent', () => {
         ).toBeTruthy();
         // Nothing watched/in-progress -> earliest season with unwatched episodes (season 1).
         expect(fixture.componentInstance['selectedSeasonKey']()).toBe('1');
+    });
+
+    // Regression: TvDetailScreenComponent never called
+    // TvFocusService.setActive() at all — arriving here from the poster
+    // grid/rail (which nulls the active group on teardown) left nothing
+    // focused, so a remote-only user could reach the detail page and then be
+    // unable to press OK on Play/Resume.
+    it('focuses the action row primary action (Play) once the movie resolves', async () => {
+        const { fixture, store } = await setup({ type: 'movie', itemId: '100' });
+        store.selectedItem.set({
+            movie_data: { stream_id: 100, container_extension: 'mp4' },
+            info: { name: 'A Movie', plot: 'plot text' },
+        });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const focusService = TestBed.inject(TvFocusService);
+        expect(focusService.activeGroupId()).toBe('tv-detail-actions');
+        expect(focusService.activeIndex()).toBe(0);
+
+        const playButton = fixture.nativeElement.querySelector(
+            '.tv-detail-action-row__button--primary'
+        );
+        expect(playButton).toBeTruthy();
+        expect(focusService.activeElement()).toBe(playButton);
     });
 
     it('bootstraps through the shared session for the resolved playlist id', async () => {

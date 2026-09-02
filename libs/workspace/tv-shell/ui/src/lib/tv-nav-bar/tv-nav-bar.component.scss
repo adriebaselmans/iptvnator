@@ -1,0 +1,23 @@
+:host {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+}
+
+.tv-nav-bar__item {
+    padding: 0.5rem 1.25rem;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid transparent;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    &.tv-nav-bar__item--active {
+        font-weight: 600;
+    }
+
+    &.tv-focused {
+        border-color: var(--mat-app-primary-color, #fff);
+    }
+}

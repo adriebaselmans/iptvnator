@@ -5,6 +5,7 @@ import {
     effect,
     inject,
     signal,
+    untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -21,6 +22,7 @@ import {
 } from '@iptvnator/services';
 import { getXtreamVodInfo } from '@iptvnator/shared/interfaces';
 import type { PlayerMediaTitle } from '@iptvnator/ui/playback';
+import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import {
     TvCatalogStateComponent,
     TvDetailActionRowComponent,
@@ -88,6 +90,7 @@ export class TvDetailScreenComponent {
     private readonly session = inject(TvPlaylistSessionService);
     private readonly downloadsService = inject(DownloadsService);
     private readonly dataService = inject(DataService);
+    private readonly focusService = inject(TvFocusService);
 
     protected readonly heroActionsGroupId = HERO_ACTIONS_GROUP_ID;
     protected readonly seasonTabsGroupId = SEASON_TABS_GROUP_ID;
@@ -120,6 +123,7 @@ export class TvDetailScreenComponent {
     private readonly manualSeasonKey = signal<string | null>(null);
     private readonly nowPlaying = signal<TvNowPlaying | null>(null);
     private lastInitKey: string | null = null;
+    private hasSetInitialFocus = false;
 
     protected readonly isPlaying = computed(() => this.nowPlaying() !== null);
     protected readonly playbackResumeSeconds = computed(() =>
@@ -164,6 +168,37 @@ export class TvDetailScreenComponent {
             const type = this.routeType();
             const itemId = this.itemId();
             void this.bootstrap(playlistId, type, itemId);
+        });
+
+        // Correction (Phase 8 audit): this screen never called
+        // `TvFocusService.setActive()` at all. It is the screen every poster
+        // card leads to, and it carries the action row (Play/Resume,
+        // Favourite, Download, Mark watched) — with nothing focused on
+        // arrival none of those are reachable, so a remote-only user could
+        // browse to a title and then be unable to play it.
+        // `unregisterGroup()` nulls the active group when the previous
+        // screen's groups tear down, so arriving unfocused is the default,
+        // not an edge case. Focus lands on the action row's first item
+        // (Play/Resume when the item is playable, per §6.4 the row only ever
+        // renders actions the item actually supports, so index 0 is always
+        // the primary one available).
+        //
+        // Angular flushes effects BEFORE change detection runs
+        // (`ComponentFixture.detectChanges()`/`ApplicationRef.tick()`), so
+        // the action row's `ngOnInit` — which registers its focus group —
+        // has not run yet the first time this guard is satisfied, even
+        // though the gating signals (`isLoading`/`hasError`/`isEmpty`) can
+        // already read as ready. `queueMicrotask` defers the actual
+        // `setActive()` call past that change-detection pass.
+        effect(() => {
+            if (this.hasSetInitialFocus) return;
+            if (this.isLoading() || this.hasError() || this.isEmpty()) return;
+            this.hasSetInitialFocus = true;
+            untracked(() => {
+                queueMicrotask(() =>
+                    this.focusService.setActive(HERO_ACTIONS_GROUP_ID, 0)
+                );
+            });
         });
     }
 
@@ -325,6 +360,10 @@ export class TvDetailScreenComponent {
         if (!force && this.lastInitKey === key) return;
         this.lastInitKey = key;
         this.manualSeasonKey.set(null);
+        // A different item (e.g. a Similar-rail hop that reuses this same
+        // routed component) needs its own initial focus, not the leftover
+        // flag from whatever was focused before.
+        this.hasSetInitialFocus = false;
 
         this.isBootstrapping.set(true);
         this.bootstrapFailed.set(false);

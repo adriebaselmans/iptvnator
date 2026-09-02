@@ -49,7 +49,16 @@ test.beforeEach(async ({ page, request }) => {
 test('@tv paging deep into a 40,000-title catalogue keeps the rendered card count bounded', async ({
     page,
     request,
-}) => {
+}, testInfo) => {
+    // `LOAD_MORE_TRIGGERS` (20) descents, each needing up to
+    // `ceil(previousCount / 2) + 1` real `ArrowDown` key presses against a
+    // window that grows by 50 every trigger, add up to several thousand
+    // individual `page.keyboard.press()` round-trips by the last iteration —
+    // comfortably past Playwright's 30s default budget once focus genuinely
+    // moves through the grid (same reasoning as `stalker.e2e.ts`'s full-auth
+    // suite).
+    testInfo.setTimeout(120_000);
+
     // Sanity-check the seeded fixture size against the mock server directly,
     // independent of anything the app renders.
     const vodResponse = await request.get(`${MOCK_SERVER}/xtream`, {
@@ -60,8 +69,11 @@ test('@tv paging deep into a 40,000-title catalogue keeps the rendered card coun
         },
     });
     expect(vodResponse.ok()).toBe(true);
-    const vodStreams = (await vodResponse.json()) as unknown[];
-    expect(vodStreams.length).toBe(TV_SCALE_TOTAL_VOD_ITEMS);
+    // The `/xtream` route mirrors the app's own CORS-proxy shape
+    // (`dispatchProxyAction` in the mock server) — the array sits under
+    // `.payload`, exactly like `xtream.e2e.ts` already reads it.
+    const vodBody = (await vodResponse.json()) as { payload: unknown[] };
+    expect(vodBody.payload.length).toBe(TV_SCALE_TOTAL_VOD_ITEMS);
 
     await addXtreamPortal(page, {
         name: 'TV Scale Portal',
@@ -94,17 +106,31 @@ test('@tv paging deep into a 40,000-title catalogue keeps the rendered card coun
 
     let previousCount = INITIAL_WINDOW;
     for (let trigger = 0; trigger < LOAD_MORE_TRIGGERS; trigger += 1) {
-        // Enough downward presses to reach the last row of the current
-        // window even at the narrowest supported column count
-        // (`TV_GRID_MIN_COLUMNS` = 2, so at most `visibleCount / 2` presses).
+        // Press one row at a time and stop the instant the window grows,
+        // rather than pre-computing a fixed batch size. A fixed batch sized
+        // for the narrowest supported column count
+        // (`TV_GRID_MIN_COLUMNS` = 2) is only a valid upper bound on how many
+        // presses are NEEDED to reach the last row — at the real runtime
+        // column count (measured from the viewport, §7.4 — 3+ at a normal
+        // desktop width, never exactly the assumed worst case), the same
+        // fixed batch reaches the bottom sooner and then keeps going,
+        // legitimately walking through several new "last row" arrivals
+        // within one batch and growing the window by several chunks instead
+        // of one. `TvPosterGridComponent` firing on every genuine arrival is
+        // correct (§8.2); the fixed-size batch was the wrong model of it.
+        // `maxPressesForThisWindow` remains a safety cap so a genuine
+        // regression (loadMore never firing) still fails fast instead of
+        // hanging.
         const maxPressesForThisWindow = Math.ceil(previousCount / 2) + 1;
+        let grown = false;
         for (let press = 0; press < maxPressesForThisWindow; press += 1) {
             await page.keyboard.press('ArrowDown');
+            if ((await cards.count()) > previousCount) {
+                grown = true;
+                break;
+            }
         }
-
-        await expect
-            .poll(async () => cards.count(), { timeout: 5_000 })
-            .toBeGreaterThan(previousCount);
+        expect(grown).toBe(true);
         previousCount = await cards.count();
 
         // Bounded at every step, not just at the end — a virtualization

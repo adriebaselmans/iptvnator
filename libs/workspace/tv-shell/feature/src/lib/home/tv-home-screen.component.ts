@@ -31,9 +31,17 @@ import {
     TvCatalogStateComponent,
     TvHomeHeroComponent,
     TvHomeRailComponent,
+    TvNavBarComponent,
     type TvHomeRailItem,
+    type TvNavBarItem,
 } from '@iptvnator/workspace/tv-shell/ui';
 import { TvLiveEpgFeedService } from '../live/tv-live-epg-feed.service';
+import {
+    TV_NAV_GROUP_ID,
+    tvNavRoute,
+    tvNavSections,
+    type TvNavSectionId,
+} from '../nav/tv-nav-bar.util';
 import { TvPlaylistSessionService } from '../session/tv-playlist-session.service';
 import { buildTvHomeScreenState } from './tv-home-screen-state';
 import {
@@ -67,6 +75,7 @@ import {
         TvCatalogStateComponent,
         TvHomeHeroComponent,
         TvHomeRailComponent,
+        TvNavBarComponent,
     ],
     templateUrl: './tv-home-screen.component.html',
     styleUrl: './tv-home-screen.component.scss',
@@ -91,6 +100,7 @@ export class TvHomeScreenComponent {
     private readonly recommendations = inject(DashboardRecommendationsService);
 
     protected readonly heroGroupId = TV_HOME_HERO_GROUP_ID;
+    protected readonly navGroupId = TV_NAV_GROUP_ID;
 
     private readonly languageTick = toSignal(
         this.translate.onLangChange.pipe(startWith(null)),
@@ -124,6 +134,19 @@ export class TvHomeScreenComponent {
     protected readonly isLoading = this.state.isLoading;
     protected readonly hasError = this.state.hasError;
     protected readonly isEmpty = this.state.isEmpty;
+
+    /**
+     * The persistent top nav row (design correction #18): always rendered,
+     * regardless of loading/error/empty state, so it stays the one escape
+     * hatch to the other sections even when home itself has nothing to show.
+     */
+    protected readonly navItems = computed<TvNavBarItem[]>(() => {
+        this.languageTick();
+        return tvNavSections().map((section) => ({
+            id: section.id,
+            label: this.translate.instant(section.labelKey),
+        }));
+    });
 
     private lastBootstrappedPlaylistId: string | null = null;
     private hasSetInitialFocus = false;
@@ -197,18 +220,26 @@ export class TvHomeScreenComponent {
             });
         });
 
+        // Same race as the catalog screen's initial-focus effect (found
+        // chasing `tv-catalog-scale.e2e.ts`, same fix as the detail screen's
+        // and source picker's): Angular flushes effects BEFORE change
+        // detection runs, so on the flush where these gating signals first
+        // read ready, the hero/rail's `TvFocusGroupDirective` has not
+        // necessarily registered yet, and `setActive()` silently no-ops
+        // against an unregistered group with no retry. `queueMicrotask`
+        // defers the call past that change-detection pass.
         effect(() => {
             if (this.hasSetInitialFocus) return;
             if (this.isLoading() || this.hasError()) return;
             const layout = this.layout();
             const hasHero = this.hero() !== null;
             if (!hasHero && layout.rails.length === 0) return;
+            this.hasSetInitialFocus = true;
             untracked(() => {
-                this.hasSetInitialFocus = true;
                 const groupId = hasHero
                     ? TV_HOME_HERO_GROUP_ID
                     : layout.rails[0].groupId;
-                this.focusService.setActive(groupId, 0);
+                queueMicrotask(() => this.focusService.setActive(groupId, 0));
             });
         });
     }
@@ -233,6 +264,12 @@ export class TvHomeScreenComponent {
         if (route) {
             void this.router.navigate(route as string[]);
         }
+    }
+
+    protected onNavItemActivated(sectionId: string): void {
+        void this.router.navigate([
+            ...tvNavRoute(sectionId as TvNavSectionId, this.playlistId()),
+        ]);
     }
 
     protected onRetry(): void {

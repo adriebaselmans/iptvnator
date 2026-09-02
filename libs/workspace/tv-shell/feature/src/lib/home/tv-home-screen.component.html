@@ -1,3 +1,10 @@
+<lib-tv-nav-bar
+    [tvFocusGroup]="navGroupId"
+    [neighbours]="layout().navNeighbours"
+    [items]="navItems()"
+    activeId="home"
+    (itemActivated)="onNavItemActivated($event)"
+/>
 @if (hasError()) {
     <lib-tv-catalog-state
         variant="error"

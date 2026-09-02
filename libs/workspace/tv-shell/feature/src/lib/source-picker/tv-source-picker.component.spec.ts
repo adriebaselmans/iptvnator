@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { PlaylistMeta } from '@iptvnator/shared/interfaces';
 import { selectAllPlaylistsMeta } from '@iptvnator/m3u-state';
+import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { TvSourcePickerComponent } from './tv-source-picker.component';
@@ -96,5 +97,40 @@ describe('TvSourcePickerComponent', () => {
         const multiNavigateSpy = jest.spyOn(multiRouter, 'navigate');
         multiFixture.detectChanges();
         expect(multiNavigateSpy).not.toHaveBeenCalled();
+    });
+
+    // Regression for correction #17: with more than one source the screen
+    // never redirects, so nothing was ever focused and neither arrow keys
+    // nor OK could do anything — TvFocusService.move()/activateFocusedElement()
+    // both no-op while activeGroupId() is null.
+    it('focuses the first card once multiple sources have resolved, so arrow keys and OK can operate the screen', async () => {
+        const { fixture } = await setup([
+            xtreamPlaylist('a'),
+            xtreamPlaylist('b'),
+            xtreamPlaylist('c'),
+        ]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const focusService = TestBed.inject(TvFocusService);
+        expect(focusService.activeGroupId()).toBe('tv-source-picker');
+        expect(focusService.activeIndex()).toBe(0);
+
+        focusService.move('right');
+        expect(focusService.activeIndex()).toBe(1);
+
+        const cards: HTMLButtonElement[] = Array.from(
+            fixture.nativeElement.querySelectorAll(
+                '[data-test-id="tv-source-picker-card"]'
+            )
+        );
+        expect(focusService.activeElement()).toBe(cards[1]);
+
+        const clickSpy = jest.spyOn(cards[1], 'click');
+        (focusService.activeElement() as HTMLButtonElement).click();
+        expect(clickSpy).toHaveBeenCalled();
     });
 });
