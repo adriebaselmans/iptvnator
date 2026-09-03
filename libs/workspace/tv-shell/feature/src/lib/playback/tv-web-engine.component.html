@@ -4,15 +4,36 @@
     [isLive]="isLive()"
     [interactionEnabled]="false"
     [mediaTitle]="mediaTitle()"
+    (playbackIssue)="onPlaybackIssue($event)"
 ></app-html-video-player>
-<lib-tv-player-controls
-    [controller]="htmlPlayer().controlsAdapter"
-    [playerSurface]="playerSurface()"
-    [isLive]="isLive()"
-    [mediaTitle]="mediaTitle()"
-    [isOverlayActive]="isOverlayActive()"
-    (channelChangeRequested)="channelChangeRequested.emit($event)"
-    (openChannelBarRequested)="openChannelBarRequested.emit()"
-    (overlayBackRequested)="overlayBackRequested.emit()"
-    (exited)="exited.emit()"
-></lib-tv-player-controls>
+@if (errorDescriptionKey(); as descriptionKey) {
+    <!--
+      Replaces the controls (rather than layering on top): while
+      `lib-tv-player-controls` is mounted it registers a playback session
+      that makes the shell's root keydown listener route OK/arrows as
+      transport keys (§6.3/§9.2) instead of focus navigation, which would
+      make Retry unreachable from the remote.
+    -->
+    <div class="tv-web-engine__error">
+        <lib-tv-catalog-state
+            variant="error"
+            [title]="'TV.PLAYBACK.ERROR_TITLE' | translate"
+            [description]="descriptionKey | translate"
+            [retryLabel]="'TV.PLAYBACK.ERROR_RETRY' | translate"
+            [retryGroupId]="retryGroupId"
+            (retry)="onRetry()"
+        ></lib-tv-catalog-state>
+    </div>
+} @else {
+    <lib-tv-player-controls
+        [controller]="htmlPlayer().controlsAdapter"
+        [playerSurface]="playerSurface()"
+        [isLive]="isLive()"
+        [mediaTitle]="mediaTitle()"
+        [isOverlayActive]="isOverlayActive()"
+        (channelChangeRequested)="channelChangeRequested.emit($event)"
+        (openChannelBarRequested)="openChannelBarRequested.emit()"
+        (overlayBackRequested)="overlayBackRequested.emit()"
+        (exited)="exited.emit()"
+    ></lib-tv-player-controls>
+}

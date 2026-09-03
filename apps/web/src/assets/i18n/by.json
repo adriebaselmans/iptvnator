@@ -1685,7 +1685,16 @@
         },
         "PLAYBACK": {
             "ENGINE_FRAME_COPY": "Embedded MPV (frame-copy)",
-            "ENGINE_WEB": "Web player"
+            "ENGINE_WEB": "Web player",
+            "ERROR_TITLE": "Playback failed",
+            "ERROR_RETRY": "Retry",
+            "ERROR_UNSUPPORTED_CONTAINER": "This stream format is not supported by the player.",
+            "ERROR_UNSUPPORTED_CODEC": "This stream uses a video or audio codec that is not supported.",
+            "ERROR_MEDIA_DECODE_ERROR": "The stream could not be decoded. It may be corrupted or in an unsupported format.",
+            "ERROR_NETWORK_ERROR": "The stream could not be reached. Check the connection to your source and try again.",
+            "ERROR_BROWSER_ACCESS_ERROR": "The stream could not be accessed. The source may require authentication or be blocking this connection.",
+            "ERROR_DRM_OR_ENCRYPTION": "This stream is protected and cannot be played.",
+            "ERROR_UNKNOWN_PLAYBACK_ERROR": "Playback failed for an unknown reason."
         },
         "LIVE": {
             "LOADING": "Loading…",

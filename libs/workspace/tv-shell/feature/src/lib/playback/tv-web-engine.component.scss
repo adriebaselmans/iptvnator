@@ -3,3 +3,10 @@
     position: absolute;
     inset: 0;
 }
+
+.tv-web-engine__error {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: var(--app-surface, #121620);
+}

@@ -213,6 +213,94 @@ test.describe('Electron TV Shell', () => {
             await closeElectronApp(app);
         }
     });
+
+    test('@tv a broken stream shows a keyboard-reachable Retry', async ({
+        dataDir,
+        request,
+    }) => {
+        await resetMockServers(request, ['xtream']);
+
+        let app = await launchElectronApp(dataDir);
+        try {
+            await addXtreamPortal(app.mainWindow, {
+                username: TV_USERNAME,
+                password: TV_PASSWORD,
+            });
+            await waitForXtreamCatalog(app.mainWindow);
+
+            app = await restartElectronApp(app, dataDir, {
+                appArgs: ['--tv'],
+            });
+            await app.mainWindow.waitForURL(/\/tv\/xtreams\/.+\/home$/, {
+                timeout: 30000,
+            });
+
+            // Simulate a real provider being unreachable: abort the stream
+            // request at the network level rather than relying on the mock
+            // server ever returning an error for it.
+            await app.mainWindow.route('**/movie/**', (route) =>
+                route.abort('connectionrefused')
+            );
+            await app.mainWindow.route('**/x36xhzz*', (route) =>
+                route.abort('connectionrefused')
+            );
+
+            await navBarItem(app.mainWindow, 'Movies').click();
+            await app.mainWindow.waitForURL(/\/tv\/xtreams\/.+\/movies$/, {
+                timeout: 20000,
+            });
+            const firstCard = app.mainWindow
+                .locator('.tv-poster-card')
+                .first();
+            await expect(firstCard).toBeVisible({ timeout: 20000 });
+            await firstCard.click();
+            await app.mainWindow.waitForURL(
+                /\/tv\/xtreams\/.+\/detail\/movie\/.+/,
+                { timeout: 20000 }
+            );
+            const playButton = app.mainWindow.locator(
+                '.tv-detail-action-row__button--primary'
+            );
+            await expect(playButton).toBeVisible({ timeout: 20000 });
+            await playButton.click();
+
+            // The defect this regresses: `TvWebEngineComponent` rendered
+            // `<lib-tv-catalog-state variant="error">` with its own Retry
+            // button on a genuine playback failure, but nothing ever called
+            // `TvFocusService.setActive()` for its focus group — the group
+            // registered itself but was never made active, so real DOM
+            // focus (and `TvFocusService.activeElement()`) stayed on
+            // whatever the detail page had focused before playback started
+            // (its own Play button). The error state was visible but
+            // completely unreachable from a remote: OK did nothing, and a
+            // second OK press would have silently replayed the same broken
+            // stream instead of retrying through the visible button (§6.4
+            // "no hidden actions" — a rendered-but-unfocusable control is
+            // worse than not rendering one at all).
+            const retryButton = app.mainWindow.locator(
+                '.tv-catalog-state__retry'
+            );
+            await expect(retryButton).toBeVisible({ timeout: 20000 });
+            await expect(retryButton).toHaveClass(/tv-focused/, {
+                timeout: 20000,
+            });
+
+            let retryRequestSeen = false;
+            app.mainWindow.on('request', (req) => {
+                if (req.url().includes('/movie/')) retryRequestSeen = true;
+            });
+            await app.mainWindow.keyboard.press('Enter');
+            await expect
+                .poll(() => retryRequestSeen, {
+                    timeout: 10000,
+                    message:
+                        'Enter on the focused Retry did not re-request the stream',
+                })
+                .toBe(true);
+        } finally {
+            await closeElectronApp(app);
+        }
+    });
 });
 
 function navBarItem(page: Page, label: string) {

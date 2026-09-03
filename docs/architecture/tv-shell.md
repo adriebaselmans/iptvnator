@@ -271,18 +271,46 @@ support.
 Both engine branches mount `TvPlayerControlsComponent` against the shared,
 engine-neutral `PlayerController` contract (`@iptvnator/ui/playback`) —
 consuming that library is in bounds (design §9.1a; only *modifying*
-`libs/ui/playback` is out of bounds per §5.5), and it is what makes playback
-diagnostics, recovery, subtitles, the quality menu, VOD multi-source
-failover and resume all work without reimplementation.
+`libs/ui/playback` is out of bounds per §5.5), and it is what makes
+transport controls, subtitles, the quality menu, VOD multi-source failover
+and resume all work without reimplementation. Playback *diagnostics and
+recovery* are a separate concern owned by `WebPlayerViewComponent` (which
+wires `HtmlVideoPlayerComponent`'s `(playbackIssue)` output into
+`WebPlayerRecoveryController` and `<app-playback-diagnostic-panel>`) — TV
+mode does not mount that component, so it needs its own surface; see below.
+
+**Web engine playback errors:** `TvWebEngineComponent` binds
+`HtmlVideoPlayerComponent`'s public `(playbackIssue)` output (a
+`PlaybackDiagnostic | null`, `@iptvnator/playback/util`) into a local signal.
+A non-null diagnostic replaces `TvPlayerControlsComponent` — not layers over
+it — with a TV-native error state built from the same
+`lib-tv-catalog-state` component the catalogue/detail/live screens use for
+their own load errors, giving a translated message
+(`tv-playback-diagnostic-message.util.ts` maps
+`PlaybackDiagnostic.code` to `TV.PLAYBACK.ERROR_*` copy — a small,
+TV-shell-owned copy of the code→copy mapping
+`PlaybackDiagnosticPanelComponent` keeps privately in `libs/ui/playback`,
+not reusable from here since it is not exported from that library's public
+barrel and its wider mapping branches on desktop-only external-player
+capability) and a focusable Retry. Replacing rather than layering matters:
+while `TvPlayerControlsComponent` is mounted it registers a playback session
+that makes the shell's root keydown listener route OK/arrows as transport
+keys (§6.3/§9.2) instead of focus navigation, which would make Retry
+unreachable from the remote. Retry re-attempts the current stream by
+bumping an internal token that forces the `channel` computed feeding
+`[channel]` to recompute to a fresh object reference — the same signal
+`HtmlVideoPlayerComponent.ngOnChanges()` already uses to decide whether to
+re-run `playChannel()`, so no non-public API is touched.
 
 **Known limitation, carried forward from Phase 4b:** `EmbeddedMpvPlayerComponent`
-renders its own loading/stalled/error states and a plain-click Retry with no
-focusability, so a failed stream under frame-copy shows a recovery control no
-remote key can reach. Not fatal — Back always exits playback regardless —
-but not fixable from the shell without either an upstream `shortcutsEnabled`/
-`showDiagnostics` extension point on that component, or the shell rendering
-its own focusable recovery from the `PlayerController`'s diagnostic. Neither
-has been done yet.
+(frame-copy) renders its own loading/stalled/error states and a plain-click
+Retry with no focusability, so a failed stream under frame-copy shows a
+recovery control no remote key can reach. Not fatal — Back always exits
+playback regardless — but not fixable from the shell without either an
+upstream `shortcutsEnabled`/`showDiagnostics` extension point on that
+component, or the shell rendering its own focusable recovery from the
+`PlayerController`'s diagnostic, the way `TvWebEngineComponent` now does for
+the web engine. Neither has been done for frame-copy yet.
 
 ## Catalogue scale (§8.2)
 
