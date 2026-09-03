@@ -4,6 +4,7 @@ import {
     buildTvEpgGridRow,
     resolveTvZapTarget,
     toEpgProgrammeSummary,
+    toTvLiveChannel,
 } from './tv-live-screen.util';
 
 function stream(overrides: Partial<XtreamLiveStream> = {}): XtreamLiveStream {
@@ -38,6 +39,50 @@ describe('buildTvChannelBarItems', () => {
             stream({ name: '' }),
         ]);
         expect(items).toEqual([]);
+    });
+});
+
+describe('toTvLiveChannel', () => {
+    it('maps the raw Xtream API shape (PWA data source: name/stream_icon)', () => {
+        expect(
+            toTvLiveChannel({
+                xtream_id: 5,
+                name: 'BBC One',
+                stream_icon: 'logo.png',
+                epg_channel_id: 'bbc1.uk',
+            })
+        ).toEqual({
+            xtream_id: 5,
+            stream_id: undefined,
+            name: 'BBC One',
+            stream_icon: 'logo.png',
+            epg_channel_id: 'bbc1.uk',
+        });
+    });
+
+    it('maps the SQLite content row shape (Electron data source: title/poster_url, no name/stream_icon column)', () => {
+        expect(
+            toTvLiveChannel({
+                xtream_id: 5,
+                title: 'BBC One',
+                poster_url: 'logo.png',
+                epg_channel_id: 'bbc1.uk',
+            })
+        ).toEqual({
+            xtream_id: 5,
+            stream_id: undefined,
+            name: 'BBC One',
+            stream_icon: 'logo.png',
+            epg_channel_id: 'bbc1.uk',
+        });
+    });
+
+    it('drops a row with neither name nor title', () => {
+        expect(toTvLiveChannel({ xtream_id: 5 })).toBeNull();
+    });
+
+    it('drops a row with no resolvable id even when title is present', () => {
+        expect(toTvLiveChannel({ title: 'BBC One' })).toBeNull();
     });
 });
 

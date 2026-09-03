@@ -27,6 +27,23 @@ describe('resolveTvCatalogItemId', () => {
     it('falls back to id when neither is present', () => {
         expect(resolveTvCatalogItemId({ id: 'abc' })).toBe('abc');
     });
+
+    // Regression: the Electron DB-first data source hands back the SQLite
+    // `content` row shape, which has neither `stream_id` nor `series_id` —
+    // only `xtream_id` (the provider id `get_vod_info`/`get_series_info`
+    // need) and `id` (the row's own SQLite primary key, meaningless to the
+    // provider API). Falling through to `id` here sent the wrong id to the
+    // detail screen's provider lookups and produced a blank hero with only
+    // the id-independent Favourite action enabled.
+    it('prefers xtream_id over the SQLite primary key id (Electron content row shape)', () => {
+        expect(resolveTvCatalogItemId({ xtream_id: 42, id: 1 })).toBe(42);
+    });
+
+    it('prefers xtream_id over stream_id/series_id when somehow all are present', () => {
+        expect(
+            resolveTvCatalogItemId({ xtream_id: 42, stream_id: 99, series_id: 100, id: 1 })
+        ).toBe(42);
+    });
 });
 
 describe('toTvPosterGridItem', () => {

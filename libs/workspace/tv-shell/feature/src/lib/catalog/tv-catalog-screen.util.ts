@@ -16,6 +16,7 @@ export function toTvCatalogDetailType(
 interface RawXtreamCatalogItem {
     readonly [key: string]: unknown;
     readonly id?: number | string;
+    readonly xtream_id?: number | string;
     readonly stream_id?: number | string;
     readonly series_id?: number | string;
     readonly name?: string;
@@ -26,14 +27,30 @@ interface RawXtreamCatalogItem {
 }
 
 /**
- * Resolves a catalog item's stable identity for the detail route. Movies use
- * `stream_id`, series use `series_id` — mirrors the desktop portal's own
- * item-shape handling (`with-selection.feature.ts`).
+ * Resolves a catalog item's stable identity for the detail route — the
+ * provider's own id, since it is what gets sent straight back to
+ * `get_vod_info`/`get_series_info` (`XtreamStore.fetchVodDetailsWithMetadata`/
+ * `fetchSerialDetailsWithMetadata`) and to favourites lookup
+ * (`toggleFavorite`/`checkFavoriteStatus`).
+ *
+ * The PWA data source hands back the raw Xtream API shape, which carries
+ * that id as `stream_id` (movies) or `series_id` (series) and no `xtream_id`
+ * field at all. The Electron DB-first data source hands back the SQLite
+ * `content` row shape (`libs/shared/database/src/lib/schema.ts`), which has
+ * neither `stream_id` nor `series_id` — only `xtream_id` (the provider id)
+ * and `id` (the row's own SQLite primary key, meaningless to the provider
+ * API). `xtream_id` is checked first so the Electron path never falls
+ * through to that internal database id — a leftover `stream_id ?? series_id
+ * ?? id` fallback silently sent it to the provider instead, which resolved
+ * to nothing there: the detail screen's `resolveTvMovieItem`/
+ * `resolveTvSeriesItem` guards then rejected the (wrong-item) response, so
+ * the hero rendered blank and only the id-independent Favourite action
+ * stayed enabled.
  */
 export function resolveTvCatalogItemId(
     item: RawXtreamCatalogItem
 ): number | string | undefined {
-    return item.stream_id ?? item.series_id ?? item.id;
+    return item.xtream_id ?? item.stream_id ?? item.series_id ?? item.id;
 }
 
 /**

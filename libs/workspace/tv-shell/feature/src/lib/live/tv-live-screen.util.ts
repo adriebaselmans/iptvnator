@@ -26,15 +26,25 @@ export interface TvLiveChannelSource {
 
 /**
  * Narrows one loosely-typed store selection item down to
- * `TvLiveChannelSource`, or `null` when it lacks a usable id or name (e.g. a
- * malformed catalog row) — the same drop convention `toTvChannelBarItem`
- * already applies one step later.
+ * `TvLiveChannelSource`, or `null` when it lacks a usable id or name/title
+ * (e.g. a malformed catalog row) — the same drop convention
+ * `toTvChannelBarItem` already applies one step later.
+ *
+ * The PWA data source hands back the raw Xtream API shape (`name`,
+ * `stream_icon`); the Electron DB-first data source hands back the SQLite
+ * `content` row shape (`title`, `poster_url` — there is no `name` or
+ * `stream_icon` column, see `libs/shared/database/src/lib/schema.ts`). Both
+ * are accepted here, mirroring `toTvPosterGridItem`'s `name ?? title` and
+ * `resolveTvCatalogPosterUrl`'s `poster_url`/`stream_icon` handling one
+ * screen over.
  */
 export function toTvLiveChannel(item: {
     readonly xtream_id?: unknown;
     readonly stream_id?: unknown;
     readonly name?: unknown;
+    readonly title?: unknown;
     readonly stream_icon?: unknown;
+    readonly poster_url?: unknown;
     readonly epg_channel_id?: unknown;
 }): TvLiveChannelSource | null {
     const xtreamId = typeof item.xtream_id === 'number' ? item.xtream_id : undefined;
@@ -44,7 +54,12 @@ export function toTvLiveChannel(item: {
             : typeof item.stream_id === 'string'
               ? Number(item.stream_id)
               : undefined;
-    const name = typeof item.name === 'string' ? item.name : undefined;
+    const name =
+        typeof item.name === 'string'
+            ? item.name
+            : typeof item.title === 'string'
+              ? item.title
+              : undefined;
     if (name === undefined) return null;
     if (xtreamId === undefined && (streamId === undefined || Number.isNaN(streamId))) {
         return null;
@@ -53,7 +68,12 @@ export function toTvLiveChannel(item: {
         xtream_id: xtreamId,
         stream_id: streamId,
         name,
-        stream_icon: typeof item.stream_icon === 'string' ? item.stream_icon : undefined,
+        stream_icon:
+            typeof item.stream_icon === 'string'
+                ? item.stream_icon
+                : typeof item.poster_url === 'string'
+                  ? item.poster_url
+                  : undefined,
         epg_channel_id:
             typeof item.epg_channel_id === 'string' ? item.epg_channel_id : undefined,
     };
