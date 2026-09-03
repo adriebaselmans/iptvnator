@@ -124,6 +124,7 @@ export class TvDetailScreenComponent {
     private readonly nowPlaying = signal<TvNowPlaying | null>(null);
     private lastInitKey: string | null = null;
     private hasSetInitialFocus = false;
+    private wasError = false;
 
     protected readonly isPlaying = computed(() => this.nowPlaying() !== null);
     protected readonly playbackResumeSeconds = computed(() =>
@@ -199,6 +200,27 @@ export class TvDetailScreenComponent {
                     this.focusService.setActive(HERO_ACTIONS_GROUP_ID, 0)
                 );
             });
+        });
+
+        // The Phase 8 fix above deliberately excludes the error state — it
+        // only ever activates the success-path hero actions. That left the
+        // error state's OWN Retry with the exact same defect the Phase 8
+        // audit found and fixed everywhere else: `lib-tv-catalog-state`
+        // registers `retryGroupId`'s focus group, but nothing ever called
+        // `setActive()` for it, so Retry rendered fully visible with no way
+        // to reach it from the remote — confirmed against a real Xtream
+        // provider whose `get_vod_info` returned a non-2xx status (§10).
+        // Tracks the previous `hasError()` reading rather than a one-shot
+        // latch: a failed Retry re-enters this same error state, and Retry
+        // must be reachable again each time, not only the first.
+        effect(() => {
+            const failed = this.hasError();
+            if (failed && !this.wasError) {
+                queueMicrotask(() =>
+                    this.focusService.setActive(this.retryGroupId, 0)
+                );
+            }
+            this.wasError = failed;
         });
     }
 

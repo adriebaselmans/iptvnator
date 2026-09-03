@@ -160,6 +160,60 @@ describe('TvDetailScreenComponent', () => {
         expect(store.fetchVodDetailsWithMetadata).toHaveBeenCalled();
     });
 
+    // Regresses a real defect, reported against a real Xtream provider
+    // whose get_vod_info returned a non-2xx status: the Phase 8 audit fix
+    // above only ever activates the success-path hero actions group
+    // (`isLoading() || hasError() || isEmpty()` all bail out of that
+    // effect), so the error state's own Retry registered a focus group that
+    // nothing ever made active. Retry rendered, fully visible, with no way
+    // to reach it from the remote.
+    it('makes the error state Retry the active focus target, not merely present (§6.4)', async () => {
+        const { fixture, store } = await setup({
+            type: 'movie',
+            itemId: '100',
+        });
+        store.detailsError.set('boom');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const focusService = TestBed.inject(TvFocusService);
+        const retryButton = fixture.nativeElement.querySelector(
+            '.tv-catalog-state__retry'
+        );
+        expect(retryButton).toBeTruthy();
+        expect(focusService.activeGroupId()).toBe('tv-detail-state-retry');
+        expect(focusService.activeElement()).toBe(retryButton);
+        expect(retryButton.getAttribute('tabindex')).toBe('0');
+    });
+
+    it('re-activates Retry when a retried request fails again', async () => {
+        const { fixture, store } = await setup({
+            type: 'movie',
+            itemId: '100',
+        });
+        store.detailsError.set('first failure');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const focusService = TestBed.inject(TvFocusService);
+        // Simulate a Retry that started a fresh request (clears the error)
+        // and then failed again, exactly as a still-broken provider would.
+        store.detailsError.set(null);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        store.detailsError.set('second failure');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(focusService.activeGroupId()).toBe('tv-detail-state-retry');
+        expect(focusService.activeElement()).toBe(
+            fixture.nativeElement.querySelector('.tv-catalog-state__retry')
+        );
+    });
+
     it('renders the empty state once resolved with no matching item', async () => {
         const { fixture, store } = await setup({ type: 'movie', itemId: '100' });
         store.isLoadingDetails.set(false);
