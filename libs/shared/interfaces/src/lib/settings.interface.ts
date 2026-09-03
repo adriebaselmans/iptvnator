@@ -149,10 +149,13 @@ export interface Settings {
     startupBehavior: StartupBehavior;
     /**
      * Skip the desktop workspace on startup and go straight to the `/tv`
-     * shell (10-foot HTPC UI). Also settable per-launch with the `--tv` CLI
-     * flag, which additionally puts the Electron window in kiosk mode.
-     * Missing values mean off, since existing installs must keep opening the
-     * desktop workspace they already know.
+     * shell (10-foot HTPC UI). The `--tv` CLI flag achieves the same
+     * destination per-launch (and additionally puts the Electron window in
+     * kiosk mode) WITHOUT writing to this setting — it is a one-time
+     * override read by `WorkspaceStartupPreferencesService.resolveAppEntryPath`,
+     * not an alternate way to persist it. Missing values mean off, since
+     * existing installs must keep opening the desktop workspace they
+     * already know.
      */
     startInTvMode?: boolean;
     /** Show the desktop footer bar for external playback status */

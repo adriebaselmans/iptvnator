@@ -20,15 +20,24 @@ export class WorkspaceStartupPreferencesService {
      * which resolves the workspace's OWN default child route and must keep
      * returning a workspace path even when reached directly (a deep link to
      * `/workspace` should not bounce to `/tv`).
+     *
+     * `--tv` (Electron only, `ElectronBridgeApi.launchedInTvMode`) wins over
+     * the persisted setting for THIS launch and is never written back to it —
+     * a one-off `--tv` launch must not leave the app permanently in TV mode.
+     * The PWA has no bridge, so it always falls back to the setting.
      */
     async resolveAppEntryPath(): Promise<string> {
         await this.settingsStore.loadSettings();
 
-        if (this.shouldStartInTvMode()) {
+        if (this.wasLaunchedInTvMode() || this.shouldStartInTvMode()) {
             return '/tv';
         }
 
         return '/workspace';
+    }
+
+    private wasLaunchedInTvMode(): boolean {
+        return window.electron?.launchedInTvMode === true;
     }
 
     shouldStartInTvMode(): boolean {

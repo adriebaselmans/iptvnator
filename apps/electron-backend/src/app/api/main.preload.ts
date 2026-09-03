@@ -396,6 +396,11 @@ const electronApi: ElectronBridgeApi = {
     },
     getAppVersion: () => ipcRenderer.invoke('get-app-version'),
     platform: process.platform,
+    // Forwarded onto this renderer's process.argv via the main process'
+    // `webPreferences.additionalArguments` (see `getMainWindowWebPreferences`
+    // in `apps/electron-backend/src/app/app.ts`) — a per-launch fact, not the
+    // persisted `Settings.startInTvMode`.
+    launchedInTvMode: process.argv.includes('--tv'),
     getAppUpdateStatus: () => ipcRenderer.invoke(APP_UPDATE_GET_STATUS),
     checkForAppUpdate: () => ipcRenderer.invoke(APP_UPDATE_CHECK),
     downloadAppUpdate: () => ipcRenderer.invoke(APP_UPDATE_DOWNLOAD),

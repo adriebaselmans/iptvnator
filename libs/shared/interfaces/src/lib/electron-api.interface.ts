@@ -681,6 +681,17 @@ export interface ElectronBridgeApi {
      */
     setKioskMode: (enabled: boolean) => Promise<void>;
     /**
+     * Whether THIS launch carried the `--tv` CLI flag. A synchronous,
+     * per-launch fact — not the persisted `Settings.startInTvMode` — forwarded
+     * from the main process into the renderer's `process.argv` via
+     * `webPreferences.additionalArguments` (mirrors `shouldStartInKioskMode`
+     * in `apps/electron-backend/src/app/app.ts`, which decides kiosk mode from
+     * the same flag). `WorkspaceStartupPreferencesService.resolveAppEntryPath`
+     * reads it to send this launch straight to `/tv` without writing it back
+     * to the saved settings, so a one-off `--tv` launch never sticks.
+     */
+    launchedInTvMode: boolean;
+    /**
      * Completes a close the guard intercepted: the main process re-runs the
      * original intent (window close or app quit) with the guard bypassed.
      */

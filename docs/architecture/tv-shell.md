@@ -42,10 +42,20 @@ Electron-only piece, so the route itself carries no capability guard.
 
 **Three activation paths, one destination:** the `--tv` CLI flag (Electron
 argv, read before `BrowserWindow` construction so kiosk mode can be set at
-creation), a `tv` option in `WorkspaceStartupPreferencesService`, and a
-Settings toggle. All three land on `/tv`, where the source picker either
+creation), the persisted `Settings.startInTvMode`, and the Settings toggle
+that writes it. All three land on `/tv`, where the source picker either
 lists sources or — with exactly one Xtream source — redirects straight to its
 home screen without any input (design §7.1).
+
+`--tv` is a per-launch override, not a settings write. Beyond `kiosk: true`,
+`app.ts` forwards the flag into the renderer's `process.argv` via
+`webPreferences.additionalArguments`; the preload script reads it as the
+synchronous `ElectronBridgeApi.launchedInTvMode` fact (mirroring how
+`platform` is exposed). `WorkspaceStartupPreferencesService.resolveAppEntryPath`
+checks that fact before the persisted setting, so `--tv` wins for that launch
+without ever mutating `Settings.startInTvMode` — closing once and reopening
+without the flag returns to the desktop workspace. The PWA has no bridge, so
+`resolveAppEntryPath` always falls back to the setting there.
 
 ## Persistent navigation and reachability
 

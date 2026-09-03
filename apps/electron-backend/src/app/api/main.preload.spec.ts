@@ -366,3 +366,55 @@ describe('main preload DB IPC contract', () => {
         );
     });
 });
+
+describe('main preload launchedInTvMode fact', () => {
+    const originalArgv = process.argv;
+
+    afterEach(() => {
+        process.argv = originalArgv;
+        jest.dontMock('electron');
+    });
+
+    async function exposeApiWithArgv(argv: string[]): Promise<ExposedElectronApi> {
+        jest.resetModules();
+        process.argv = argv;
+        let exposedApi: ExposedElectronApi | null = null;
+
+        jest.doMock('electron', () => ({
+            contextBridge: {
+                exposeInMainWorld: jest.fn(
+                    (_name: string, api: ExposedElectronApi) => {
+                        exposedApi = api;
+                    }
+                ),
+            },
+            ipcRenderer: {
+                invoke: jest.fn().mockResolvedValue({ success: true }),
+                on: jest.fn(),
+                off: jest.fn(),
+                send: jest.fn(),
+            },
+            webUtils: { getPathForFile: jest.fn() },
+        }));
+
+        await import('./main.preload');
+
+        if (!exposedApi) {
+            throw new Error('Expected preload API to be exposed');
+        }
+
+        return exposedApi;
+    }
+
+    it('is true when this launch carried --tv, forwarded via additionalArguments', async () => {
+        const api = await exposeApiWithArgv(['electron', '--tv']);
+
+        expect(api.launchedInTvMode).toBe(true);
+    });
+
+    it('is false when --tv is absent from argv', async () => {
+        const api = await exposeApiWithArgv(['electron']);
+
+        expect(api.launchedInTvMode).toBe(false);
+    });
+});

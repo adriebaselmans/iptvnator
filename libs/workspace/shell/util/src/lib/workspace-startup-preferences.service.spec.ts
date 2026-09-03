@@ -119,4 +119,56 @@ describe('WorkspaceStartupPreferencesService', () => {
         await expect(service.resolveAppEntryPath()).resolves.toBe('/tv');
         expect(service.shouldStartInTvMode()).toBe(true);
     });
+
+    describe('--tv launch override', () => {
+        const originalElectron = window.electron;
+
+        afterEach(() => {
+            window.electron = originalElectron;
+        });
+
+        it('sends a --tv launch to /tv without persisting the setting', async () => {
+            window.electron = {
+                launchedInTvMode: true,
+            } as unknown as typeof window.electron;
+
+            await expect(service.resolveAppEntryPath()).resolves.toBe('/tv');
+            // The persisted setting itself is untouched by the override.
+            expect(service.shouldStartInTvMode()).toBe(false);
+        });
+
+        it('falls back to the persisted setting when --tv is absent', async () => {
+            window.electron = {
+                launchedInTvMode: false,
+            } as unknown as typeof window.electron;
+
+            await expect(service.resolveAppEntryPath()).resolves.toBe(
+                '/workspace'
+            );
+
+            (
+                settingsStore as unknown as {
+                    startInTvMode: ReturnType<typeof signal<boolean>>;
+                }
+            ).startInTvMode = signal(true);
+
+            await expect(service.resolveAppEntryPath()).resolves.toBe('/tv');
+        });
+
+        it('falls back to the persisted setting without a bridge (PWA)', async () => {
+            window.electron = undefined as unknown as typeof window.electron;
+
+            await expect(service.resolveAppEntryPath()).resolves.toBe(
+                '/workspace'
+            );
+
+            (
+                settingsStore as unknown as {
+                    startInTvMode: ReturnType<typeof signal<boolean>>;
+                }
+            ).startInTvMode = signal(true);
+
+            await expect(service.resolveAppEntryPath()).resolves.toBe('/tv');
+        });
+    });
 });

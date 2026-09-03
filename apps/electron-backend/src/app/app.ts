@@ -93,7 +93,9 @@ export function shouldStartInKioskMode(argv: string[]): boolean {
     return argv.includes('--tv');
 }
 
-export function getMainWindowWebPreferences(): Electron.BrowserWindowConstructorOptions['webPreferences'] {
+export function getMainWindowWebPreferences(
+    additionalArguments: string[] = []
+): Electron.BrowserWindowConstructorOptions['webPreferences'] {
     // The frame-copy embedded MPV experiment needs the preload script to
     // load the shm frame-reader native addon, which the renderer sandbox
     // forbids. Only that opt-in flag relaxes the sandbox; context isolation
@@ -113,6 +115,12 @@ export function getMainWindowWebPreferences(): Electron.BrowserWindowConstructor
         webSecurity: true,
         backgroundThrottling: false,
         preload: join(__dirname, 'main.preload.js'),
+        // Forwards a small, explicit fact set into the renderer's
+        // `process.argv`, read by the preload script (`launchedInTvMode`).
+        // This is the documented Electron mechanism for handing a launch-time
+        // fact to preload without an extra IPC round trip; it never carries
+        // full argv, only what the caller opts to forward.
+        additionalArguments,
     };
 }
 
@@ -423,6 +431,7 @@ export default class App {
         const height = Math.min(720, workAreaSize.height || 720);
 
         const savedWindowBounds = store.get(WINDOW_BOUNDS);
+        const startInTvMode = shouldStartInKioskMode(process.argv);
 
         // Create the browser window.
         App.mainWindow = new BrowserWindow({
@@ -430,12 +439,14 @@ export default class App {
             width: width,
             height: height,
             show: false,
-            webPreferences: getMainWindowWebPreferences(),
+            webPreferences: getMainWindowWebPreferences(
+                startInTvMode ? ['--tv'] : []
+            ),
             ...savedWindowBounds,
             minHeight: 600,
             minWidth: 900,
             ...App.getPlatformTitleBarOptions(),
-            kiosk: shouldStartInKioskMode(process.argv),
+            kiosk: startInTvMode,
         });
         App.mainWindow.setMenu(null);
         attachWindowTrace(App.mainWindow);

@@ -140,7 +140,14 @@ describe('Electron app security helpers', () => {
                 sandbox: true,
                 webSecurity: true,
                 backgroundThrottling: false,
+                additionalArguments: [],
             })
+        );
+    });
+
+    it('forwards the caller-supplied launch facts as additionalArguments', () => {
+        expect(getMainWindowWebPreferences(['--tv'])?.additionalArguments).toEqual(
+            ['--tv']
         );
     });
 
