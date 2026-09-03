@@ -180,6 +180,35 @@ test.describe('Electron TV Shell', () => {
             await expect(
                 app.mainWindow.locator('.tv-playback-overlay')
             ).toBeVisible({ timeout: 20000 });
+
+            // The overlay mounting is not proof of playback — it is proof a
+            // player component was instantiated. Assert the underlying
+            // <video> element actually decodes and advances, not merely that
+            // it exists with a src.
+            const video = app.mainWindow.locator(
+                '.tv-playback-overlay video'
+            );
+            await expect(video).toBeVisible({ timeout: 20000 });
+            await expect
+                .poll(
+                    async () =>
+                        video.evaluate(
+                            (el: HTMLVideoElement) => el.readyState
+                        ),
+                    { timeout: 20000, message: 'video never reached HAVE_CURRENT_DATA' }
+                )
+                .toBeGreaterThanOrEqual(2);
+            const timeBefore = await video.evaluate(
+                (el: HTMLVideoElement) => el.currentTime
+            );
+            await app.mainWindow.waitForTimeout(3000);
+            const timeAfter = await video.evaluate(
+                (el: HTMLVideoElement) => el.currentTime
+            );
+            expect(
+                timeAfter,
+                'currentTime did not advance — video is not actually playing'
+            ).toBeGreaterThan(timeBefore);
         } finally {
             await closeElectronApp(app);
         }
