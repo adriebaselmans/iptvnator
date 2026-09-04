@@ -8,6 +8,10 @@ jest.mock('electron', () => ({
         isPackaged: false,
         isReady: jest.fn(() => false),
         on: jest.fn(),
+        dock: {
+            hide: jest.fn(),
+            show: jest.fn(),
+        },
     },
     BrowserWindow: jest.fn(),
     Menu: {
@@ -43,6 +47,7 @@ jest.mock('./services/embedded-mpv-runtime-policy.util', () => ({
 }));
 
 import {
+    applyTvKioskPresentation,
     clearElectronServiceWorkerStorage,
     getMainWindowWebPreferences,
     isExternalBrowserUrl,
@@ -204,6 +209,60 @@ describe('Electron app security helpers', () => {
             shouldStartInKioskMode(['electron', 'playlist.m3u'])
         ).toBe(false);
         expect(shouldStartInKioskMode([])).toBe(false);
+    });
+
+    describe('applyTvKioskPresentation', () => {
+        const originalPlatform = process.platform;
+
+        afterEach(() => {
+            Object.defineProperty(process, 'platform', {
+                value: originalPlatform,
+            });
+        });
+
+        // macOS's native `kiosk` mode binds Escape to exit fullscreen at
+        // the OS level before the renderer ever sees the key
+        // (electron/electron#8338) — simpleFullscreen does not carry that
+        // binding, so darwin must go through it instead of plain kiosk.
+        it('uses simpleFullscreen and hides the Dock on darwin', () => {
+            Object.defineProperty(process, 'platform', { value: 'darwin' });
+            const win = {
+                setKiosk: jest.fn(),
+                setSimpleFullScreen: jest.fn(),
+            } as unknown as BrowserWindow;
+
+            applyTvKioskPresentation(win, true);
+
+            expect(win.setSimpleFullScreen).toHaveBeenCalledWith(true);
+            expect(win.setKiosk).not.toHaveBeenCalled();
+            expect(electronApp.dock?.hide).toHaveBeenCalled();
+        });
+
+        it('restores the Dock when leaving TV mode on darwin', () => {
+            Object.defineProperty(process, 'platform', { value: 'darwin' });
+            const win = {
+                setKiosk: jest.fn(),
+                setSimpleFullScreen: jest.fn(),
+            } as unknown as BrowserWindow;
+
+            applyTvKioskPresentation(win, false);
+
+            expect(win.setSimpleFullScreen).toHaveBeenCalledWith(false);
+            expect(electronApp.dock?.show).toHaveBeenCalled();
+        });
+
+        it('uses plain kiosk on non-darwin platforms', () => {
+            Object.defineProperty(process, 'platform', { value: 'win32' });
+            const win = {
+                setKiosk: jest.fn(),
+                setSimpleFullScreen: jest.fn(),
+            } as unknown as BrowserWindow;
+
+            applyTvKioskPresentation(win, true);
+
+            expect(win.setKiosk).toHaveBeenCalledWith(true);
+            expect(win.setSimpleFullScreen).not.toHaveBeenCalled();
+        });
     });
 
     it('treats only http and https URLs as external browser URLs', () => {

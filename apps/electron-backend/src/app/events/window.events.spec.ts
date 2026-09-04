@@ -3,6 +3,14 @@ const mockHandlers = new Map<
     (event: unknown, ...args: unknown[]) => unknown
 >();
 const mockFromWebContents = jest.fn();
+const mockApplyTvKioskPresentation = jest.fn();
+
+// The real implementation (platform branching, simpleFullscreen vs kiosk,
+// Dock visibility) is covered by app.spec.ts. This spec only needs to prove
+// the IPC handler calls through with the right window and flag.
+jest.mock('../app', () => ({
+    applyTvKioskPresentation: mockApplyTvKioskPresentation,
+}));
 
 jest.mock('electron', () => ({
     ipcMain: {
@@ -114,15 +122,25 @@ describe('WindowEvents', () => {
         expect(result).toEqual({ isMaximized: true, isFullScreen: true });
     });
 
-    it('toggles kiosk mode on the sender window', () => {
+    it('toggles kiosk mode on the sender window through the shared platform policy', () => {
         const win = createFakeWindow();
         mockFromWebContents.mockReturnValue(win);
 
         mockHandlers.get('WINDOW:SET_KIOSK_MODE')!(fakeEvent, true);
-        expect(win.setKiosk).toHaveBeenCalledWith(true);
+        expect(mockApplyTvKioskPresentation).toHaveBeenCalledWith(win, true);
 
         mockHandlers.get('WINDOW:SET_KIOSK_MODE')!(fakeEvent, false);
-        expect(win.setKiosk).toHaveBeenCalledWith(false);
+        expect(mockApplyTvKioskPresentation).toHaveBeenCalledWith(win, false);
+    });
+
+    it('is a safe no-op for kiosk mode when the sender has no window', () => {
+        mockApplyTvKioskPresentation.mockClear();
+        mockFromWebContents.mockReturnValue(null);
+
+        expect(() =>
+            mockHandlers.get('WINDOW:SET_KIOSK_MODE')!(fakeEvent, true)
+        ).not.toThrow();
+        expect(mockApplyTvKioskPresentation).not.toHaveBeenCalled();
     });
 
     it('is a safe no-op when the sender has no window', () => {

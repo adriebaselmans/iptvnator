@@ -13,6 +13,7 @@ import {
     WINDOW_SET_KIOSK_MODE,
     WINDOW_TOGGLE_MAXIMIZE,
 } from '@iptvnator/shared/interfaces';
+import { applyTvKioskPresentation } from '../app';
 
 interface WindowState {
     isMaximized: boolean;
@@ -80,7 +81,13 @@ ipcMain.handle(WINDOW_GET_STATE, (event): WindowState => {
 
 // TV shell kiosk mode (docs/architecture/tv-shell.md): the window already
 // launches into kiosk mode up front when started with --tv (see app.ts); this
-// is the runtime switch for entering/leaving it without a restart.
+// is the runtime switch for entering/leaving it without a restart. Goes
+// through the same `applyTvKioskPresentation` policy as that initial launch
+// — see its doc comment for why macOS needs simpleFullscreen instead of
+// plain `kiosk`.
 ipcMain.handle(WINDOW_SET_KIOSK_MODE, (event, enabled: boolean) => {
-    getSenderWindow(event)?.setKiosk(enabled);
+    const win = getSenderWindow(event);
+    if (win) {
+        applyTvKioskPresentation(win, enabled);
+    }
 });

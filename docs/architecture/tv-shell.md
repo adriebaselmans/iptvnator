@@ -47,15 +47,37 @@ that writes it. All three land on `/tv`, where the source picker either
 lists sources or — with exactly one Xtream source — redirects straight to its
 home screen without any input (design §7.1).
 
-`--tv` is a per-launch override, not a settings write. Beyond `kiosk: true`,
-`app.ts` forwards the flag into the renderer's `process.argv` via
-`webPreferences.additionalArguments`; the preload script reads it as the
+`--tv` is a per-launch override, not a settings write. Beyond kiosk
+presentation, `app.ts` forwards the flag into the renderer's `process.argv`
+via `webPreferences.additionalArguments`; the preload script reads it as the
 synchronous `ElectronBridgeApi.launchedInTvMode` fact (mirroring how
 `platform` is exposed). `WorkspaceStartupPreferencesService.resolveAppEntryPath`
 checks that fact before the persisted setting, so `--tv` wins for that launch
 without ever mutating `Settings.startInTvMode` — closing once and reopening
 without the flag returns to the desktop workspace. The PWA has no bridge, so
 `resolveAppEntryPath` always falls back to the setting there.
+
+**Kiosk presentation is platform-specific**, via `applyTvKioskPresentation()`
+(`app.ts`), used both by the initial `--tv` launch and by the runtime
+`WINDOW_SET_KIOSK_MODE` toggle. Windows/Linux use plain `kiosk: true`.
+Reported by a real user: on macOS this left Live TV completely unrecoverable
+from the remote — `kiosk` mode there is implemented through NSWindow's native
+fullscreen, and macOS binds Escape to exit native fullscreen at the OS level,
+before Chromium's input pipeline (let alone the shell's own keydown listener)
+ever sees the key. This is a long-standing, still-open upstream Electron
+limitation (electron/electron#8338, #4316), not a bug in this app's key
+routing — §6.3's routing was verified correct against real Electron on Linux
+and never reproduced the stuck state there, consistent with this being an
+OS-level interception rather than an app-level one. darwin uses
+`setSimpleFullScreen()` instead ("pre-Lion" style, which does not carry that
+OS-level Escape binding) and manually hides the Dock to compensate for what
+plain `kiosk` would otherwise have hidden. **This has not been verified
+against real macOS hardware** — this sandbox has no macOS runtime, so the fix
+rests on Electron's own documented behavior and community reports of the
+underlying issue, not on a reproduction-then-fix cycle. If Live TV is still
+unrecoverable on macOS after this, the Escape interception may be happening
+even earlier than `setSimpleFullScreen()` avoids, and needs a report with the
+exact macOS version.
 
 ## Persistent navigation and reachability
 

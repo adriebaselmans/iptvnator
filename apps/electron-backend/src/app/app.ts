@@ -93,6 +93,43 @@ export function shouldStartInKioskMode(argv: string[]): boolean {
     return argv.includes('--tv');
 }
 
+/**
+ * Applies or releases TV kiosk presentation for a window.
+ *
+ * On macOS, `BrowserWindow`'s native `kiosk` mode is implemented through
+ * NSWindow's native fullscreen, and macOS binds Escape to exit native
+ * fullscreen at the OS level — before Chromium's own input pipeline, let
+ * alone this app's renderer keydown listener, ever sees the key
+ * (electron/electron#8338, #4316: long-standing, still open upstream, no
+ * documented guaranteed fix). `simpleFullscreen` ("pre-Lion" style,
+ * `setSimpleFullScreen()` — there is no constructor option for it, unlike
+ * `kiosk`) does not carry that OS-level Escape binding, so darwin uses it
+ * instead. It does not hide the Dock the way `kiosk` does, so that is
+ * restored by hand — a visible Dock is the most direct way a user could
+ * otherwise tap or click straight out of TV mode. Windows/Linux keep plain
+ * `kiosk`; this Escape gap has only ever been observed on macOS.
+ *
+ * Exported so the initial `--tv` launch (`initMainWindow`) and the runtime
+ * `WINDOW_SET_KIOSK_MODE` toggle (`window.events.ts`) apply the identical
+ * platform policy rather than maintaining two darwin branches that could
+ * drift apart.
+ */
+export function applyTvKioskPresentation(
+    win: Electron.BrowserWindow,
+    enabled: boolean
+): void {
+    if (process.platform === 'darwin') {
+        win.setSimpleFullScreen(enabled);
+        if (enabled) {
+            app.dock?.hide();
+        } else {
+            app.dock?.show();
+        }
+        return;
+    }
+    win.setKiosk(enabled);
+}
+
 export function getMainWindowWebPreferences(
     additionalArguments: string[] = []
 ): Electron.BrowserWindowConstructorOptions['webPreferences'] {
@@ -446,8 +483,14 @@ export default class App {
             minHeight: 600,
             minWidth: 900,
             ...App.getPlatformTitleBarOptions(),
-            kiosk: startInTvMode,
+            // darwin gets simpleFullscreen instead, applied below — see
+            // `applyTvKioskPresentation`'s doc comment for why plain
+            // `kiosk` is wrong there.
+            kiosk: process.platform === 'darwin' ? false : startInTvMode,
         });
+        if (startInTvMode && process.platform === 'darwin') {
+            applyTvKioskPresentation(App.mainWindow, true);
+        }
         App.mainWindow.setMenu(null);
         attachWindowTrace(App.mainWindow);
         App.attachWindowStateEvents(App.mainWindow);
