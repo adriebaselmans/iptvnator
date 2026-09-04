@@ -1,0 +1,24 @@
+<div class="tv-leave-confirm__panel">
+    <h2 class="tv-leave-confirm__title">{{ title() }}</h2>
+    @if (description(); as description) {
+        <p class="tv-leave-confirm__description">{{ description }}</p>
+    }
+    <div class="tv-leave-confirm__actions">
+        <button
+            type="button"
+            tvFocusable
+            class="tv-leave-confirm__button tv-leave-confirm__button--stay"
+            (click)="stay.emit()"
+        >
+            {{ stayLabel() }}
+        </button>
+        <button
+            type="button"
+            tvFocusable
+            class="tv-leave-confirm__button tv-leave-confirm__button--exit"
+            (click)="exit.emit()"
+        >
+            {{ exitLabel() }}
+        </button>
+    </div>
+</div>

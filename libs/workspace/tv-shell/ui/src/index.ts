@@ -14,3 +14,4 @@ export * from './lib/tv-home-rail/tv-home-rail.component';
 export * from './lib/tv-keyboard/tv-keyboard.component';
 export * from './lib/tv-keyboard/tv-keyboard.util';
 export * from './lib/tv-nav-bar/tv-nav-bar.component';
+export * from './lib/tv-leave-confirm/tv-leave-confirm.component';

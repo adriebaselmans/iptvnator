@@ -1,1 +1,12 @@
 <router-outlet></router-outlet>
+@if (showLeaveConfirm()) {
+    <lib-tv-leave-confirm
+        [tvFocusGroup]="leaveConfirmGroupId"
+        [title]="'TV.SHELL.LEAVE_TITLE' | translate"
+        [description]="'TV.SHELL.LEAVE_DESCRIPTION' | translate"
+        [stayLabel]="'TV.SHELL.LEAVE_STAY' | translate"
+        [exitLabel]="'TV.SHELL.LEAVE_EXIT' | translate"
+        (stay)="onStayInTvMode()"
+        (exit)="onExitTvMode()"
+    ></lib-tv-leave-confirm>
+}

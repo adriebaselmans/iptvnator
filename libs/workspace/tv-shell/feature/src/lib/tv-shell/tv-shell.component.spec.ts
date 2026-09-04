@@ -1,7 +1,9 @@
 import { Location } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
+import { TV_NAV_GROUP_ID } from '../nav/tv-nav-bar.util';
 import {
     TvPlaybackSession,
     TvPlaybackSessionService,
@@ -34,14 +36,23 @@ function dispatchKeydown(
 
 describe('TvShellComponent', () => {
     let fixture: ComponentFixture<TvShellComponent>;
-    let focusService: { move: jest.Mock; activeElement: jest.Mock };
+    let focusService: {
+        move: jest.Mock;
+        activeElement: jest.Mock;
+        setActive: jest.Mock;
+    };
     let locationBackSpy: jest.SpyInstance;
+    let router: Router;
 
     beforeEach(async () => {
-        focusService = { move: jest.fn(), activeElement: jest.fn(() => null) };
+        focusService = {
+            move: jest.fn(),
+            activeElement: jest.fn(() => null),
+            setActive: jest.fn(),
+        };
 
         await TestBed.configureTestingModule({
-            imports: [TvShellComponent],
+            imports: [TvShellComponent, TranslateModule.forRoot()],
             providers: [
                 provideRouter([]),
                 { provide: TvFocusService, useValue: focusService },
@@ -51,7 +62,13 @@ describe('TvShellComponent', () => {
         fixture = TestBed.createComponent(TvShellComponent);
         fixture.detectChanges();
         locationBackSpy = jest.spyOn(TestBed.inject(Location), 'back');
+        router = TestBed.inject(Router);
     });
+
+    /** `Router.url` is read-only in real navigation; stubbed for a unit test. */
+    function stubCurrentUrl(url: string): void {
+        Object.defineProperty(router, 'url', { value: url, configurable: true });
+    }
 
     it.each([
         ['ArrowUp', 'up'],
@@ -113,12 +130,62 @@ describe('TvShellComponent', () => {
     it.each(['Backspace', 'Escape'])(
         '%s goes back and prevents default',
         (key) => {
+            stubCurrentUrl('/tv/xtreams/abc/live');
+
             const event = dispatchKeydown(fixture, key);
 
             expect(locationBackSpy).toHaveBeenCalledTimes(1);
             expect(event.defaultPrevented).toBe(true);
         }
     );
+
+    describe('Back at the TV home route (§6.1 leave-TV-mode confirm)', () => {
+        beforeEach(() => {
+            stubCurrentUrl('/tv/xtreams/abc/home');
+        });
+
+        it('opens the leave confirmation instead of calling Location.back()', () => {
+            dispatchKeydown(fixture, 'Backspace');
+
+            expect(fixture.componentInstance['showLeaveConfirm']()).toBe(true);
+            expect(locationBackSpy).not.toHaveBeenCalled();
+        });
+
+        it('a second Back closes the confirmation and restores nav-bar focus', () => {
+            dispatchKeydown(fixture, 'Backspace');
+            focusService.setActive.mockClear();
+
+            dispatchKeydown(fixture, 'Backspace');
+
+            expect(fixture.componentInstance['showLeaveConfirm']()).toBe(false);
+            expect(focusService.setActive).toHaveBeenCalledWith(
+                TV_NAV_GROUP_ID,
+                0
+            );
+            expect(locationBackSpy).not.toHaveBeenCalled();
+        });
+
+        it('onStayInTvMode closes the confirmation without navigating away', () => {
+            fixture.componentInstance['onStayInTvMode']();
+
+            expect(fixture.componentInstance['showLeaveConfirm']()).toBe(false);
+            expect(focusService.setActive).toHaveBeenCalledWith(
+                TV_NAV_GROUP_ID,
+                0
+            );
+        });
+
+        it('onExitTvMode closes the confirmation and navigates to the desktop workspace', () => {
+            const navigateSpy = jest
+                .spyOn(router, 'navigateByUrl')
+                .mockResolvedValue(true);
+
+            fixture.componentInstance['onExitTvMode']();
+
+            expect(fixture.componentInstance['showLeaveConfirm']()).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith('/workspace');
+        });
+    });
 
     it.each(['a', 'Tab', ' ', 'F5', 'Shift'])(
         '%s is ignored: no focus move, no activation, no back, no preventDefault',

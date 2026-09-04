@@ -6,15 +6,22 @@ import {
     HostListener,
     effect,
     inject,
+    signal,
 } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
+import { TvLeaveConfirmComponent } from '@iptvnator/workspace/tv-shell/ui';
+import { TV_NAV_GROUP_ID } from '../nav/tv-nav-bar.util';
 import { mapTvKeyToIntent } from './tv-key-intent.util';
+import { isTvHomeRoute } from './tv-shell-route.util';
 import { mapTvPlaybackKeyToIntent } from '../playback/tv-playback-key-intent.util';
 import {
     TvPlaybackSession,
     TvPlaybackSessionService,
 } from '../playback/tv-playback-session.service';
+
+const LEAVE_CONFIRM_GROUP_ID = 'tv-leave-confirm';
 
 /**
  * The routed `/tv` shell root (§5.3/§6.3 of the TV shell design). Owns the
@@ -25,7 +32,7 @@ import {
  */
 @Component({
     selector: 'lib-tv-shell',
-    imports: [RouterOutlet],
+    imports: [RouterOutlet, TvLeaveConfirmComponent, TranslateModule],
     templateUrl: './tv-shell.component.html',
     styleUrl: './tv-shell.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,9 +44,21 @@ import {
 export class TvShellComponent {
     private readonly focusService = inject(TvFocusService);
     private readonly location = inject(Location);
+    private readonly router = inject(Router);
     private readonly playbackSession = inject(TvPlaybackSessionService);
     private readonly elementRef =
         inject<ElementRef<HTMLElement>>(ElementRef);
+
+    /**
+     * The Back-at-Home confirmation (§6.1, correction: this was designed but
+     * never built, leaving Back at Home a silent no-op — there was no
+     * earlier route to pop into, and no way back to the desktop workspace
+     * short of quitting the app). Own focus group, own `setActive()` call
+     * below, exactly the pattern every other overlay/error state in this
+     * shell already uses.
+     */
+    protected readonly showLeaveConfirm = signal(false);
+    protected readonly leaveConfirmGroupId = LEAVE_CONFIRM_GROUP_ID;
 
     constructor() {
         // The shell root is the DOM focus holder of last resort: before any
@@ -57,6 +76,22 @@ export class TvShellComponent {
                 if (document.activeElement !== element) {
                     element.focus({ preventScroll: true });
                 }
+            }
+        });
+
+        // `TvLeaveConfirmComponent` registers its own focus group when it
+        // mounts (`@if (showLeaveConfirm())` in the template), but
+        // registering a group never makes it active on its own (§6.4) — the
+        // exact gap Phase 8's audit found and fixed for every other overlay
+        // in this shell. `queueMicrotask` matches that established pattern:
+        // the group's `ngOnInit` has not run yet the first time this effect
+        // sees `showLeaveConfirm()` turn true, since Angular flushes effects
+        // before the change-detection pass that mounts the `@if` branch.
+        effect(() => {
+            if (this.showLeaveConfirm()) {
+                queueMicrotask(() =>
+                    this.focusService.setActive(this.leaveConfirmGroupId, 0)
+                );
             }
         });
     }
@@ -84,11 +119,16 @@ export class TvShellComponent {
                 this.activateFocusedElement();
                 break;
             case 'back':
-                // While a session-owned overlay (channel bar, category
-                // column, EPG grid) has claimed the key stream, Back closes
-                // it instead of popping route navigation (§7.3 "Back
-                // closes").
-                if (session) {
+                if (this.showLeaveConfirm()) {
+                    // A second Back while the confirm is open cancels it —
+                    // Back means "step back" consistently everywhere in
+                    // this shell, never "confirm the destructive choice".
+                    this.onStayInTvMode();
+                } else if (session) {
+                    // While a session-owned overlay (channel bar, category
+                    // column, EPG grid) has claimed the key stream, Back
+                    // closes it instead of popping route navigation (§7.3
+                    // "Back closes").
                     session.onOverlayBack?.();
                 } else {
                     this.goBack();
@@ -162,11 +202,37 @@ export class TvShellComponent {
     }
 
     /**
-     * Pops navigation. The home-root "prompt to leave TV mode" behaviour
-     * (§6.1) is deferred to the phase that builds the home screen — there is
-     * nothing to prompt from yet with only placeholder screens routed.
+     * Pops navigation, except at TV mode's root (Home): there is nothing
+     * earlier to pop into there, so `location.back()` would be a silent
+     * no-op, and the only way out of TV mode would be quitting the app.
+     * Opens the leave confirmation instead (§6.1).
      */
     private goBack(): void {
+        if (isTvHomeRoute(this.router.url)) {
+            this.showLeaveConfirm.set(true);
+            return;
+        }
         this.location.back();
+    }
+
+    /** Closes the confirmation without leaving TV mode. */
+    protected onStayInTvMode(): void {
+        this.showLeaveConfirm.set(false);
+        // The confirm's own group is gone the moment this signal flips (its
+        // `@if` unmounts, `TvFocusGroupDirective.ngOnDestroy` unregisters
+        // it), which would otherwise leave nothing active — the nav bar's
+        // Home entry is always index 0 there and always mounted on Home,
+        // the only screen this confirm ever opens from, so it is the one
+        // restore target that is always valid.
+        this.focusService.setActive(TV_NAV_GROUP_ID, 0);
+    }
+
+    /**
+     * Leaves TV mode for the desktop workspace. Not a settings write —
+     * `startInTvMode` is untouched, so the next TV launch still starts here.
+     */
+    protected onExitTvMode(): void {
+        this.showLeaveConfirm.set(false);
+        void this.router.navigateByUrl('/workspace');
     }
 }

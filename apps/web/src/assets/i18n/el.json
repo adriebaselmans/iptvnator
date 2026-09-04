@@ -1732,6 +1732,12 @@
             "KEYBOARD_BACKSPACE": "Backspace",
             "KEYBOARD_CLEAR": "Clear",
             "KEYBOARD_SPACE": "Space"
+        },
+        "SHELL": {
+            "LEAVE_TITLE": "Leave TV mode?",
+            "LEAVE_DESCRIPTION": "You'll return to the desktop workspace. TV mode starts again next time you launch it this way.",
+            "LEAVE_STAY": "Stay",
+            "LEAVE_EXIT": "Exit to desktop"
         }
     }
 }

@@ -166,6 +166,16 @@ first. This is design correction #12 (see STATE file): §6.3 originally said
 overlays claim the stream, §9.2 said playback sessions claim everything, and
 those only visibly conflict once the channel bar exists.
 
+**Back at Home leaves TV mode.** At `/tv/xtreams/:id/home` there is no earlier
+route to pop into, so Back there (`isTvHomeRoute()` in
+`tv-shell-route.util.ts`) opens a two-button confirmation
+(`TvLeaveConfirmComponent`, own focus group, `Stay` focused by default)
+instead of `Location.back()` being a silent no-op. `Stay` (or a second Back,
+which always means "step back", never "confirm") closes it and restores the
+nav bar's Home focus; `Exit` navigates to `/workspace` without writing
+`Settings.startInTvMode`, so the next TV launch still starts here. This is
+the one way back to the desktop workspace short of quitting the app.
+
 Reused controls carry their own document-level shortcut layer
 (`app-player-controls`'s `ControlsShortcuts`: Space/K, F, arrows, M) that
 overlaps the remote's keys exactly. TV mode always mounts it with
