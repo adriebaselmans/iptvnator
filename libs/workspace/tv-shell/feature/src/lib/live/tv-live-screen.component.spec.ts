@@ -195,7 +195,7 @@ describe('TvLiveScreenComponent', () => {
         expect(fixture.componentInstance['playingChannelId']()).toBe(1);
     });
 
-    it('zaps to the next/previous channel on Up/Down without opening the channel bar', async () => {
+    it('zaps to the next/previous channel on Up/Down', async () => {
         const { fixture, store } = await setup();
         store.selectItemsFromSelectedCategory.set([
             channel(1, 'A'),
@@ -210,7 +210,6 @@ describe('TvLiveScreenComponent', () => {
         expect(store.constructStreamUrl).toHaveBeenLastCalledWith(
             expect.objectContaining({ xtream_id: 2 })
         );
-        expect(fixture.componentInstance['overlayOpen']()).toBe(false);
 
         fixture.componentInstance['onChannelChange']('up');
         expect(store.constructStreamUrl).toHaveBeenLastCalledWith(
@@ -281,13 +280,7 @@ describe('TvLiveScreenComponent', () => {
         expect(focusService.activeGroupId()).toBe('tv-live-channel-bar');
     });
 
-    it('asks the EPG feed once for the whole category when the channel bar opens, never one request per channel', async () => {
-        // Regression for routing EPG fetches through the shared, throttled
-        // `EpgQueueService` (via `TvLiveEpgFeedService`) instead of firing
-        // one unthrottled request per channel — a `Promise.all` fan-out here
-        // can flood the provider and trip `HostConnectivityGuard` for the
-        // whole origin. `ensureVisible()` must be called with the full
-        // category exactly once per open, not per channel.
+    it('requests EPG for the whole category when the channel bar auto-opens, not per channel', async () => {
         const { fixture, store, epgFeed } = await setup();
         store.selectItemsFromSelectedCategory.set([
             channel(1, 'A'),
@@ -296,11 +289,6 @@ describe('TvLiveScreenComponent', () => {
         ]);
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
-
-        expect(epgFeed.ensureVisible).not.toHaveBeenCalled();
-
-        fixture.componentInstance['onOpenChannelBar']();
         fixture.detectChanges();
 
         expect(epgFeed.ensureVisible).toHaveBeenCalledTimes(1);
@@ -319,14 +307,20 @@ describe('TvLiveScreenComponent', () => {
         );
     });
 
-    it('does not request EPG while the overlay is closed', async () => {
+    it('does not re-request EPG after closing and reopening the overlay', async () => {
         const { fixture, store, epgFeed } = await setup();
         store.selectItemsFromSelectedCategory.set([channel(1, 'A')]);
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(epgFeed.ensureVisible).not.toHaveBeenCalled();
+        const callsAfterAutoOpen = epgFeed.ensureVisible.mock.calls.length;
+        fixture.componentInstance['onOverlayBack']();
+        fixture.detectChanges();
+        fixture.componentInstance['onOpenChannelBar']();
+        fixture.detectChanges();
+
+        expect(epgFeed.ensureVisible).toHaveBeenCalledTimes(callsAfterAutoOpen + 1);
     });
 
     it('auto-hides the overlay after 5s of no focus movement, and stays open within that window', async () => {

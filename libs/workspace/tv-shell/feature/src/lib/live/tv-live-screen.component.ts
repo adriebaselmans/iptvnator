@@ -205,8 +205,11 @@ export class TvLiveScreenComponent {
             });
         });
 
-        // Auto-tunes the first channel once the category's channels are
-        // available and nothing has been tuned yet (fresh screen mount).
+        // Auto-tunes the first channel and opens the channel bar overlay
+        // once the category's channels are available and nothing has been
+        // tuned yet (fresh screen mount). The overlay starts open so the
+        // user sees the channel list and EPG immediately instead of a
+        // black screen.
         effect(() => {
             const channels = this.channels();
             untracked(() => {
@@ -214,6 +217,7 @@ export class TvLiveScreenComponent {
                     return;
                 }
                 this.tuneChannel(channels[0]);
+                this.onOpenChannelBar();
             });
         });
 
