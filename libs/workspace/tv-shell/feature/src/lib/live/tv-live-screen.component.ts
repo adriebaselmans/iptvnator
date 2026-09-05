@@ -46,6 +46,8 @@ const CATEGORY_COLUMN_GROUP_ID = 'tv-live-category-column';
 const EPG_ROW_GROUP_PREFIX = 'tv-live-epg-row';
 /** §7.3: overlays auto-hide after 5 s of no input. */
 const IDLE_HIDE_MS = 5000;
+/** Cadence for refreshing the EPG grid's "now" indicator; a live clock is not needed. */
+const NOW_TICK_MS = 30_000;
 
 /**
  * `/tv/xtreams/:id/live` (§7.3): the TiviMate interaction model. Video fills
@@ -107,7 +109,13 @@ export class TvLiveScreenComponent {
     protected readonly bootstrapFailed = signal(false);
     protected readonly overlayOpen = signal(false);
     protected readonly playingChannelId = signal<number | null>(null);
+    /** Drives the EPG grid's "now" line/auto-scroll; ticks every 30s, not every second. */
+    protected readonly nowMs = signal(Date.now());
     private idleTimer: ReturnType<typeof setTimeout> | null = null;
+    private readonly nowTimer = setInterval(
+        () => this.nowMs.set(Date.now()),
+        NOW_TICK_MS
+    );
     private lastBootstrappedPlaylistId: string | null = null;
 
     protected readonly channels = computed<TvLiveChannelSource[]>(() =>
@@ -253,6 +261,7 @@ export class TvLiveScreenComponent {
 
         this.destroyRef.onDestroy(() => {
             if (this.idleTimer) clearTimeout(this.idleTimer);
+            clearInterval(this.nowTimer);
         });
     }
 

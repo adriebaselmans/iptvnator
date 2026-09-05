@@ -68,6 +68,7 @@
             [emptyLabel]="'TV.LIVE.EPG_NO_DATA' | translate"
             [groupIdPrefix]="epgRowGroupPrefix"
             [leftNeighbourGroupId]="channelBarGroupId"
+            [nowMs]="nowMs()"
             (programmeActivated)="onEpgRowActivated($event)"
         />
     </div>

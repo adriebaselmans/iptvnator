@@ -1,32 +1,80 @@
 @if (rows().length === 0) {
     <p class="tv-epg-grid__empty">{{ emptyLabel() }}</p>
 } @else {
-    <div class="tv-epg-grid__rows">
-        @for (row of rows(); track trackByChannelId($index, row)) {
-            <div
-                class="tv-epg-grid__row"
-                [tvFocusGroup]="rowGroupId(row)"
-                orientation="row"
-                [neighbours]="rowNeighbours($index)"
-            >
-                <span class="tv-epg-grid__channel-name">{{ row.channelName }}</span>
-                <div class="tv-epg-grid__programmes">
-                    @for (
-                        programme of row.programmes;
-                        track trackByProgrammeId($index, programme)
-                    ) {
-                        <button
-                            type="button"
-                            tvFocusable
-                            class="tv-epg-grid__cell"
-                            [class.tv-epg-grid__cell--current]="programme.isCurrent"
-                            (click)="programmeActivated.emit(row)"
+    <div class="tv-epg-timeline" #scrollContainer>
+        <div class="tv-epg-timeline__content">
+            <div class="tv-epg-timeline__header">
+                <div class="tv-epg-timeline__corner"></div>
+                <div
+                    class="tv-epg-timeline__time-axis"
+                    [style.width.px]="timelineWidthPx()"
+                >
+                    @for (slot of timeSlots(); track slot.offsetPx) {
+                        <span
+                            class="tv-epg-timeline__slot"
+                            [style.left.px]="slot.offsetPx"
                         >
-                            {{ programme.title }}
-                        </button>
+                            {{ slot.label }}
+                        </span>
+                    }
+                    @if (nowVisible()) {
+                        <span
+                            class="tv-epg-timeline__now-tick"
+                            [style.left.px]="nowOffsetPx()"
+                        ></span>
                     }
                 </div>
             </div>
-        }
+            <div class="tv-epg-timeline__body">
+                @for (row of rows(); track trackByChannelId($index, row)) {
+                    <div
+                        class="tv-epg-timeline__row"
+                        [tvFocusGroup]="rowGroupId(row)"
+                        orientation="row"
+                        [neighbours]="rowNeighbours($index)"
+                    >
+                        <span class="tv-epg-timeline__channel-name">{{
+                            row.channelName
+                        }}</span>
+                        <div
+                            class="tv-epg-timeline__programmes"
+                            [style.width.px]="timelineWidthPx()"
+                        >
+                            @if (nowVisible()) {
+                                <span
+                                    class="tv-epg-timeline__now-line"
+                                    [style.left.px]="nowOffsetPx()"
+                                ></span>
+                            }
+                            @for (
+                                programme of row.programmes;
+                                track trackByProgrammeId($index, programme)
+                            ) {
+                                <button
+                                    type="button"
+                                    tvFocusable
+                                    class="tv-epg-timeline__cell"
+                                    [class.tv-epg-timeline__cell--current]="
+                                        programme.isCurrent
+                                    "
+                                    [style.left.px]="cellLayout(programme).leftPx"
+                                    [style.width.px]="cellLayout(programme).widthPx"
+                                    (click)="programmeActivated.emit(row)"
+                                >
+                                    <span class="tv-epg-timeline__cell-title">{{
+                                        programme.title
+                                    }}</span>
+                                    @if (showStartTime(programme)) {
+                                        <span class="tv-epg-timeline__cell-time">{{
+                                            formatStartTime(programme)
+                                        }}</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 }

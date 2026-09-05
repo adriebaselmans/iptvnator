@@ -1,16 +1,15 @@
+$channel-column-width: 10rem;
+$row-height: 3.5rem;
+
 :host {
     display: block;
     height: 100%;
     max-height: 100%;
     min-width: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
     background: var(--app-widget-bg, rgba(20, 22, 30, 0.92));
     border-radius: 0.75rem;
     box-sizing: border-box;
-    padding: 0.5rem;
-    /* Sole scroll owner for the grid; each row scrolls its own programmes
-       horizontally, independent of this vertical scroll. */
+    overflow: hidden;
 }
 
 .tv-epg-grid__empty {
@@ -19,61 +18,151 @@
     font-size: 1.05rem;
 }
 
-.tv-epg-grid__rows {
+.tv-epg-timeline {
+    height: 100%;
+    max-height: 100%;
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 0.5rem;
+}
+
+.tv-epg-timeline__content {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    min-width: max-content;
 }
 
-.tv-epg-grid__row {
+.tv-epg-timeline__header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    background: var(--app-widget-bg, rgba(20, 22, 30, 0.92));
+}
+
+.tv-epg-timeline__corner {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    flex: 0 0 $channel-column-width;
+    width: $channel-column-width;
+    background: var(--app-widget-bg, rgba(20, 22, 30, 0.92));
+}
+
+.tv-epg-timeline__time-axis {
+    position: relative;
+    flex: 0 0 auto;
+    height: 1.75rem;
+}
+
+.tv-epg-timeline__slot {
+    position: absolute;
+    top: 0;
+    transform: translateX(-2px);
+    color: var(--app-muted-color, #8891a4);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    border-left: 1px solid var(--app-separator, rgba(255, 255, 255, 0.08));
+    padding-left: 0.35rem;
+}
+
+.tv-epg-timeline__now-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--app-selection-color, #78adff);
+}
+
+.tv-epg-timeline__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-top: 0.35rem;
+}
+
+.tv-epg-timeline__row {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+    height: $row-height;
+}
+
+.tv-epg-timeline__channel-name {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    flex: 0 0 $channel-column-width;
+    width: $channel-column-width;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.tv-epg-grid__channel-name {
-    flex: 0 0 10rem;
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--app-on-surface, #e6e1e5);
     font-size: 1rem;
+    background: var(--app-widget-bg, rgba(20, 22, 30, 0.92));
+    padding-right: 0.5rem;
 }
 
-.tv-epg-grid__programmes {
+.tv-epg-timeline__programmes {
+    position: relative;
+    flex: 0 0 auto;
+    height: 100%;
+}
+
+.tv-epg-timeline__now-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--app-selection-color, #78adff);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.tv-epg-timeline__cell {
+    position: absolute;
+    top: 0.2rem;
+    bottom: 0.2rem;
     display: flex;
-    flex: 1 1 auto;
-    min-width: 0;
-    gap: 0.4rem;
-    overflow-x: auto;
-    padding: 0.2rem 0;
-}
-
-.tv-epg-grid__cell {
-    flex-shrink: 0;
-    max-width: 16rem;
-    padding: 0.5rem 0.9rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.4rem 0.6rem;
     border-radius: 0.4rem;
     border: 3px solid transparent;
     background: var(--app-separator, rgba(255, 255, 255, 0.08));
     color: var(--app-on-surface, #e6e1e5);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     text-align: left;
     cursor: pointer;
     outline: none;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    box-sizing: border-box;
 
     &.tv-focused {
         border-color: var(--app-selection-color, #78adff);
         box-shadow: 0 0 0 4px var(--app-selection-glow, rgba(120, 173, 255, 0.4));
+        z-index: 2;
     }
 }
 
-.tv-epg-grid__cell--current {
+.tv-epg-timeline__cell-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tv-epg-timeline__cell-time {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--app-muted-color, #8891a4);
+    font-size: 0.75rem;
+}
+
+.tv-epg-timeline__cell--current {
     background: var(--app-selection-surface, rgba(120, 173, 255, 0.18));
     color: var(--app-selection-color, #78adff);
 }
