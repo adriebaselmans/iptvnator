@@ -1,11 +1,13 @@
 <div class="tv-source-picker" data-test-id="tv-source-picker">
-    <h1>{{ 'TV.SOURCE_PICKER.TITLE' | translate }}</h1>
+    @if (wizardStep() === 'idle') {
+        <h1>{{ 'TV.SOURCE_PICKER.TITLE' | translate }}</h1>
 
-    @if (xtreamSources().length === 0) {
-        <p class="tv-source-picker__empty" data-test-id="tv-source-picker-empty">
-            {{ 'TV.SOURCE_PICKER.EMPTY' | translate }}
-        </p>
-    } @else {
+        @if (xtreamSources().length === 0) {
+            <p class="tv-source-picker__empty" data-test-id="tv-source-picker-empty">
+                {{ 'TV.SOURCE_PICKER.EMPTY' | translate }}
+            </p>
+        }
+
         <div
             class="tv-source-picker__cards"
             [tvFocusGroup]="groupId"
@@ -22,6 +24,98 @@
                 >
                     {{ sourceLabel(source) }}
                 </button>
+            }
+            <button
+                type="button"
+                tvFocusable
+                class="tv-source-picker__card tv-source-picker__card--add"
+                data-test-id="tv-source-picker-add-card"
+                (click)="onAddSourceActivated()"
+            >
+                + {{ 'TV.SOURCE_PICKER.ADD_SOURCE' | translate }}
+            </button>
+        </div>
+    } @else {
+        <div class="tv-source-picker__wizard" data-test-id="tv-source-picker-wizard">
+            @switch (wizardStep()) {
+                @case ('url') {
+                    <h1>{{ 'TV.SOURCE_PICKER.SERVER_URL' | translate }}</h1>
+                }
+                @case ('username') {
+                    <h1>{{ 'TV.SOURCE_PICKER.USERNAME' | translate }}</h1>
+                }
+                @case ('password') {
+                    <h1>{{ 'TV.SOURCE_PICKER.PASSWORD' | translate }}</h1>
+                }
+                @case ('connecting') {
+                    <h1>{{ 'TV.SOURCE_PICKER.CONNECTING' | translate }}</h1>
+                }
+            }
+
+            @if (wizardStep() !== 'connecting') {
+                <div
+                    class="tv-source-picker__wizard-value"
+                    data-test-id="tv-source-picker-wizard-value"
+                >
+                    @if (currentInputValue()) {
+                        {{ currentInputValue() }}
+                    } @else {
+                        <span class="tv-source-picker__wizard-placeholder">{{
+                            'TV.SOURCE_PICKER.WIZARD_PLACEHOLDER' | translate
+                        }}</span>
+                    }
+                </div>
+
+                @if (showValidationError()) {
+                    <p class="tv-source-picker__wizard-error">
+                        {{ 'TV.SOURCE_PICKER.VALIDATION_ERROR' | translate }}
+                    </p>
+                }
+                @if (connectFailed()) {
+                    <p class="tv-source-picker__wizard-error">
+                        {{ 'TV.SOURCE_PICKER.CONNECT_ERROR' | translate }}
+                    </p>
+                }
+
+                <lib-tv-keyboard
+                    [focusGroupId]="wizardKeyboardGroupId"
+                    [neighbours]="wizardKeyboardNeighbours"
+                    (charEntered)="onWizardCharEntered($event)"
+                    (backspacePressed)="onWizardBackspace()"
+                    (cleared)="onWizardCleared()"
+                />
+
+                <div
+                    class="tv-source-picker__wizard-actions"
+                    [tvFocusGroup]="wizardActionsGroupId"
+                    [neighbours]="wizardActionsNeighbours"
+                    orientation="row"
+                    data-test-id="tv-source-picker-wizard-actions"
+                >
+                    <button
+                        type="button"
+                        tvFocusable
+                        class="tv-source-picker__wizard-button"
+                        data-test-id="tv-source-picker-wizard-back"
+                        (click)="onWizardBack()"
+                    >
+                        {{ 'TV.SOURCE_PICKER.BACK' | translate }}
+                    </button>
+                    <button
+                        type="button"
+                        tvFocusable
+                        class="tv-source-picker__wizard-button"
+                        data-test-id="tv-source-picker-wizard-next"
+                        (click)="onWizardNext()"
+                    >
+                        {{
+                            (wizardStep() === 'password'
+                                ? 'TV.SOURCE_PICKER.CONNECT'
+                                : 'TV.SOURCE_PICKER.NEXT'
+                            ) | translate
+                        }}
+                    </button>
+                </div>
             }
         </div>
     }

@@ -1644,7 +1644,18 @@
     "TV": {
         "SOURCE_PICKER": {
             "TITLE": "Choose a source",
-            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode."
+            "EMPTY": "Add an Xtream source in the desktop workspace to use TV mode.",
+            "ADD_SOURCE": "Add source",
+            "SERVER_URL": "Server URL",
+            "USERNAME": "Username",
+            "PASSWORD": "Password",
+            "CONNECTING": "Connecting…",
+            "WIZARD_PLACEHOLDER": "Type using the keyboard below…",
+            "NEXT": "Next",
+            "BACK": "Back",
+            "CONNECT": "Connect",
+            "VALIDATION_ERROR": "Enter a value to continue.",
+            "CONNECT_ERROR": "Could not add this source. Check the details and try again."
         },
         "NAV": {
             "HOME": "Home",

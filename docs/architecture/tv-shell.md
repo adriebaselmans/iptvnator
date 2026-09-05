@@ -47,6 +47,24 @@ that writes it. All three land on `/tv`, where the source picker either
 lists sources or — with exactly one Xtream source — redirects straight to its
 home screen without any input (design §7.1).
 
+**Adding a source from the source picker.** Alongside the Xtream source
+cards, the picker always shows a focusable "Add source" card (even at zero
+sources, so a fresh install is not stranded on `/tv`) that opens an inline
+three-step wizard — Server URL, Username, Password, each its own on-screen
+keyboard step, reusing `TvKeyboardComponent` — entirely inside
+`TvSourcePickerComponent` (`tv-source-picker.component.ts`/`.html`; step
+transitions and playlist-building are pure helpers in
+`tv-add-source-wizard.util.ts`). No new route: the wizard is a `wizardStep`
+signal (`idle | url | username | password | connecting`) swapped in place.
+Connect persists the playlist via `PlaylistsService.addPlaylist()` directly
+rather than dispatching `PlaylistActions.addPlaylist` (the desktop import
+dialog's path) — that action's `addPlaylist$` effect also navigates to
+`/workspace/xtreams/:id` on success, which would immediately kick the user
+back out of TV mode. `PlaylistActions.loadPlaylists()` is dispatched
+afterwards to sync NgRx state through the same `loadPlaylistsSuccess` path,
+without that navigation side effect. On success the wizard navigates to the
+new source's `/tv/xtreams/:id/home`.
+
 `--tv` is a per-launch override, not a settings write. Beyond kiosk
 presentation, `app.ts` forwards the flag into the renderer's `process.argv`
 via `webPreferences.additionalArguments`; the preload script reads it as the

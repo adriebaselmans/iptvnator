@@ -2,10 +2,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { PlaylistMeta } from '@iptvnator/shared/interfaces';
-import { selectAllPlaylistsMeta } from '@iptvnator/m3u-state';
+import { PlaylistActions, selectAllPlaylistsMeta } from '@iptvnator/m3u-state';
+import { PlaylistsService } from '@iptvnator/services';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
 import { TvSourcePickerComponent } from './tv-source-picker.component';
 
 function xtreamPlaylist(id: string): PlaylistMeta {
@@ -19,11 +21,20 @@ function xtreamPlaylist(id: string): PlaylistMeta {
 }
 
 async function setup(
-    playlists: PlaylistMeta[]
+    playlists: PlaylistMeta[],
+    options?: { addPlaylistFails?: boolean }
 ): Promise<{
     fixture: ComponentFixture<TvSourcePickerComponent>;
     router: Router;
+    playlistsService: { addPlaylist: jest.Mock };
+    store: MockStore;
 }> {
+    const playlistsService = {
+        addPlaylist: options?.addPlaylistFails
+            ? jest.fn().mockReturnValue(throwError(() => new Error('fail')))
+            : jest.fn().mockImplementation((playlist) => of(playlist)),
+    };
+
     await TestBed.configureTestingModule({
         imports: [
             TvSourcePickerComponent,
@@ -36,12 +47,14 @@ async function setup(
                     { selector: selectAllPlaylistsMeta, value: playlists },
                 ],
             }),
+            { provide: PlaylistsService, useValue: playlistsService },
         ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(TvSourcePickerComponent);
     const router = TestBed.inject(Router);
-    return { fixture, router };
+    const store = TestBed.inject(MockStore);
+    return { fixture, router, playlistsService, store };
 }
 
 describe('TvSourcePickerComponent', () => {
@@ -132,5 +145,185 @@ describe('TvSourcePickerComponent', () => {
         const clickSpy = jest.spyOn(cards[1], 'click');
         (focusService.activeElement() as HTMLButtonElement).click();
         expect(clickSpy).toHaveBeenCalled();
+    });
+
+    describe('add source wizard', () => {
+        it('shows an "Add source" card even with zero sources, and activating it opens the URL step', async () => {
+            const { fixture } = await setup([]);
+            fixture.detectChanges();
+
+            const addCard = fixture.nativeElement.querySelector(
+                '[data-test-id="tv-source-picker-add-card"]'
+            ) as HTMLButtonElement;
+            expect(addCard).toBeTruthy();
+
+            addCard.click();
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance['wizardStep']()).toBe('url');
+            expect(
+                fixture.nativeElement.querySelector(
+                    '[data-test-id="tv-source-picker-wizard"]'
+                )
+            ).toBeTruthy();
+        });
+
+        it('Next is a no-op on an empty step and shows a validation message', async () => {
+            const { fixture } = await setup([]);
+            fixture.detectChanges();
+            fixture.componentInstance['onAddSourceActivated']();
+            fixture.detectChanges();
+
+            fixture.componentInstance['onWizardNext']();
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance['wizardStep']()).toBe('url');
+            expect(fixture.componentInstance['showValidationError']()).toBe(
+                true
+            );
+        });
+
+        it('rejects a server URL step Next when the URL cannot be normalized', async () => {
+            const { fixture } = await setup([]);
+            fixture.detectChanges();
+            fixture.componentInstance['onAddSourceActivated']();
+            fixture.componentInstance['onWizardCharEntered']('n');
+            fixture.componentInstance['onWizardCharEntered']('o');
+            fixture.componentInstance['onWizardCharEntered']('p');
+            fixture.componentInstance['onWizardCharEntered']('e');
+
+            fixture.componentInstance['onWizardNext']();
+
+            expect(fixture.componentInstance['wizardStep']()).toBe('url');
+            expect(fixture.componentInstance['showValidationError']()).toBe(
+                true
+            );
+        });
+
+        it('walks Server URL -> Username -> Password on Next, and Back walks the other way to the source cards', async () => {
+            const { fixture } = await setup([]);
+            fixture.detectChanges();
+            const instance = fixture.componentInstance as unknown as Record<
+                string,
+                (...args: unknown[]) => unknown
+            >;
+
+            instance['onAddSourceActivated']();
+            'http://example.com:8080'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+            instance['onWizardNext']();
+            expect(instance['wizardStep']()).toBe('username');
+
+            instance['onWizardCharEntered']('u');
+            instance['onWizardNext']();
+            expect(instance['wizardStep']()).toBe('password');
+
+            instance['onWizardBack']();
+            expect(instance['wizardStep']()).toBe('username');
+
+            instance['onWizardBack']();
+            expect(instance['wizardStep']()).toBe('url');
+
+            instance['onWizardBack']();
+            expect(instance['wizardStep']()).toBe('idle');
+        });
+
+        it('masks the password step display as it is typed', async () => {
+            const { fixture } = await setup([]);
+            fixture.detectChanges();
+            const instance = fixture.componentInstance as unknown as Record<
+                string,
+                (...args: unknown[]) => unknown
+            >;
+
+            instance['onAddSourceActivated']();
+            'http://example.com'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+            instance['onWizardNext']();
+            'user'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+            instance['onWizardNext']();
+            expect(instance['wizardStep']()).toBe('password');
+
+            instance['onWizardCharEntered']('p');
+            instance['onWizardCharEntered']('w');
+
+            expect(instance['currentInputValue']()).toBe('••');
+        });
+
+        it('Connect persists the playlist, syncs NgRx state and navigates to the new source home', async () => {
+            const { fixture, router, playlistsService, store } =
+                await setup([]);
+            const dispatchSpy = jest.spyOn(store, 'dispatch');
+            const navigateSpy = jest
+                .spyOn(router, 'navigate')
+                .mockResolvedValue(true);
+            fixture.detectChanges();
+            const instance = fixture.componentInstance as unknown as Record<
+                string,
+                (...args: unknown[]) => unknown
+            >;
+
+            instance['onAddSourceActivated']();
+            'http://example.com'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+            instance['onWizardNext']();
+            'user'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+            instance['onWizardNext']();
+            'pass'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+
+            await instance['onConnect']();
+
+            expect(playlistsService.addPlaylist).toHaveBeenCalledTimes(1);
+            const savedPlaylist = playlistsService.addPlaylist.mock
+                .calls[0][0];
+            expect(savedPlaylist.serverUrl).toBe('http://example.com');
+            expect(savedPlaylist.username).toBe('user');
+            expect(savedPlaylist.password).toBe('pass');
+
+            expect(dispatchSpy).toHaveBeenCalledWith(
+                PlaylistActions.loadPlaylists()
+            );
+            expect(navigateSpy).toHaveBeenCalledWith([
+                '/tv/xtreams',
+                savedPlaylist._id,
+                'home',
+            ]);
+        });
+
+        it('Connect surfaces an error and returns to the password step when persistence fails', async () => {
+            const { fixture } = await setup([], { addPlaylistFails: true });
+            fixture.detectChanges();
+            const instance = fixture.componentInstance as unknown as Record<
+                string,
+                (...args: unknown[]) => unknown
+            >;
+
+            instance['onAddSourceActivated']();
+            'http://example.com'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+            instance['onWizardNext']();
+            'user'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+            instance['onWizardNext']();
+            'pass'
+                .split('')
+                .forEach((char) => instance['onWizardCharEntered'](char));
+
+            await instance['onConnect']();
+
+            expect(instance['wizardStep']()).toBe('password');
+            expect(instance['connectFailed']()).toBe(true);
+        });
     });
 });
