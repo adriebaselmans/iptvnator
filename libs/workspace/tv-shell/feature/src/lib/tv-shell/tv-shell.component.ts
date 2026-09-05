@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { SettingsStore } from '@iptvnator/services';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import { TvLeaveConfirmComponent } from '@iptvnator/workspace/tv-shell/ui';
 import { TV_NAV_GROUP_ID } from '../nav/tv-nav-bar.util';
@@ -45,9 +46,9 @@ export class TvShellComponent {
     private readonly focusService = inject(TvFocusService);
     private readonly location = inject(Location);
     private readonly router = inject(Router);
+    private readonly settingsStore = inject(SettingsStore);
     private readonly playbackSession = inject(TvPlaybackSessionService);
-    private readonly elementRef =
-        inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     /**
      * The Back-at-Home confirmation (§6.1, correction: this was designed but
@@ -228,11 +229,19 @@ export class TvShellComponent {
     }
 
     /**
-     * Leaves TV mode for the desktop workspace. Not a settings write —
-     * `startInTvMode` is untouched, so the next TV launch still starts here.
+     * Leaves TV mode for the desktop workspace and persists the choice:
+     * `startInTvMode` is flipped off so the next launch starts in the
+     * desktop shell instead of bouncing straight back into `/tv`. A failed
+     * save must not block the navigation — the user still leaves TV mode
+     * for this session, just without the preference sticking.
      */
     protected onExitTvMode(): void {
         this.showLeaveConfirm.set(false);
+        void this.settingsStore
+            .updateSettings({ startInTvMode: false })
+            .catch((error) => {
+                console.error('Failed to persist leaving TV mode:', error);
+            });
         void this.router.navigateByUrl('/workspace');
     }
 }

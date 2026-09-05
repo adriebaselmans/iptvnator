@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { SettingsStore } from '@iptvnator/services';
 import { TvFocusService } from '@iptvnator/ui/tv-navigation';
 import { TV_NAV_GROUP_ID } from '../nav/tv-nav-bar.util';
 import {
@@ -43,6 +44,7 @@ describe('TvShellComponent', () => {
     };
     let locationBackSpy: jest.SpyInstance;
     let router: Router;
+    let settingsStore: { updateSettings: jest.Mock };
 
     beforeEach(async () => {
         focusService = {
@@ -50,12 +52,16 @@ describe('TvShellComponent', () => {
             activeElement: jest.fn(() => null),
             setActive: jest.fn(),
         };
+        settingsStore = {
+            updateSettings: jest.fn().mockResolvedValue(undefined),
+        };
 
         await TestBed.configureTestingModule({
             imports: [TvShellComponent, TranslateModule.forRoot()],
             providers: [
                 provideRouter([]),
                 { provide: TvFocusService, useValue: focusService },
+                { provide: SettingsStore, useValue: settingsStore },
             ],
         }).compileComponents();
 
@@ -67,7 +73,10 @@ describe('TvShellComponent', () => {
 
     /** `Router.url` is read-only in real navigation; stubbed for a unit test. */
     function stubCurrentUrl(url: string): void {
-        Object.defineProperty(router, 'url', { value: url, configurable: true });
+        Object.defineProperty(router, 'url', {
+            value: url,
+            configurable: true,
+        });
     }
 
     it.each([
@@ -175,7 +184,7 @@ describe('TvShellComponent', () => {
             );
         });
 
-        it('onExitTvMode closes the confirmation and navigates to the desktop workspace', () => {
+        it('onExitTvMode closes the confirmation, persists startInTvMode=false, and navigates to the desktop workspace', () => {
             const navigateSpy = jest
                 .spyOn(router, 'navigateByUrl')
                 .mockResolvedValue(true);
@@ -183,7 +192,31 @@ describe('TvShellComponent', () => {
             fixture.componentInstance['onExitTvMode']();
 
             expect(fixture.componentInstance['showLeaveConfirm']()).toBe(false);
+            expect(settingsStore.updateSettings).toHaveBeenCalledWith({
+                startInTvMode: false,
+            });
             expect(navigateSpy).toHaveBeenCalledWith('/workspace');
+        });
+
+        it('onExitTvMode still navigates to the desktop workspace when persisting the setting fails', async () => {
+            const navigateSpy = jest
+                .spyOn(router, 'navigateByUrl')
+                .mockResolvedValue(true);
+            settingsStore.updateSettings.mockRejectedValue(
+                new Error('storage unavailable')
+            );
+            const consoleErrorSpy = jest
+                .spyOn(console, 'error')
+                .mockImplementation(() => undefined);
+
+            fixture.componentInstance['onExitTvMode']();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(navigateSpy).toHaveBeenCalledWith('/workspace');
+            expect(consoleErrorSpy).toHaveBeenCalled();
+
+            consoleErrorSpy.mockRestore();
         });
     });
 
@@ -204,8 +237,8 @@ describe('TvShellComponent', () => {
         ): TvPlaybackSession {
             return {
                 controller: {
-                    capabilities: () => ({ seek: true } as never),
-                    state: () => ({ canSeek: true } as never),
+                    capabilities: () => ({ seek: true }) as never,
+                    state: () => ({ canSeek: true }) as never,
                     commands: {
                         togglePlay: jest.fn(),
                         seekBy: jest.fn(),
@@ -226,9 +259,9 @@ describe('TvShellComponent', () => {
             const event = dispatchKeydown(fixture, 'Enter');
 
             expect(session.reveal).toHaveBeenCalledTimes(1);
-            expect(session.controller.commands.togglePlay).toHaveBeenCalledTimes(
-                1
-            );
+            expect(
+                session.controller.commands.togglePlay
+            ).toHaveBeenCalledTimes(1);
             expect(focusService.move).not.toHaveBeenCalled();
             expect(event.defaultPrevented).toBe(true);
         });
@@ -247,9 +280,12 @@ describe('TvShellComponent', () => {
             const sessionService = TestBed.inject(TvPlaybackSessionService);
             const session = fakeSession({
                 controller: {
-                    capabilities: () => ({ seek: false } as never),
-                    state: () => ({ canSeek: false } as never),
-                    commands: { togglePlay: jest.fn(), seekBy: jest.fn() } as never,
+                    capabilities: () => ({ seek: false }) as never,
+                    state: () => ({ canSeek: false }) as never,
+                    commands: {
+                        togglePlay: jest.fn(),
+                        seekBy: jest.fn(),
+                    } as never,
                 },
             });
             sessionService.register(session);
@@ -298,7 +334,9 @@ describe('TvShellComponent', () => {
             dispatchKeydown(fixture, 'Enter');
 
             expect(onOpenChannelBar).toHaveBeenCalledTimes(1);
-            expect(session.controller.commands.togglePlay).not.toHaveBeenCalled();
+            expect(
+                session.controller.commands.togglePlay
+            ).not.toHaveBeenCalled();
         });
 
         describe('while the session reports an active overlay (channel bar/EPG grid)', () => {
