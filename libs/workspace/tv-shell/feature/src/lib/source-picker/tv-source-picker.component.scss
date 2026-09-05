@@ -19,10 +19,17 @@
     padding: 1.5rem 2rem;
     font-size: 1.25rem;
     border-radius: 0.5rem;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
+    background: var(--app-widget-bg, #1e2330);
+    color: var(--app-on-surface, #e6e1e5);
     cursor: pointer;
+    outline: none;
+    transition:
+        border-color 120ms ease,
+        background-color 120ms ease;
 
     &.tv-focused {
-        border-color: var(--mat-app-primary-color, #fff);
+        border-color: var(--app-selection-color, #78adff);
+        box-shadow: 0 0 0 6px var(--app-selection-glow, rgba(120, 173, 255, 0.4));
     }
 }

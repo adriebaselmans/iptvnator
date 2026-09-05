@@ -27,12 +27,12 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.6rem 0.9rem;
+    padding: 0.75rem 1rem;
     border-radius: 0.5rem;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background: transparent;
     color: var(--app-on-surface, #e6e1e5);
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     text-align: left;
     cursor: pointer;
     outline: none;
@@ -50,8 +50,8 @@
 
 .tv-channel-bar__logo {
     flex-shrink: 0;
-    width: 2rem;
-    height: 2rem;
+    width: 2.25rem;
+    height: 2.25rem;
     object-fit: contain;
     border-radius: 0.25rem;
 }

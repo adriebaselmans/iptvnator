@@ -3,18 +3,18 @@
     flex-direction: row;
     gap: 0.75rem;
     overflow-x: auto;
-    padding: 0 3rem 1rem;
+    padding: 0.75rem 3rem 1rem;
     box-sizing: border-box;
 }
 
 .tv-season-tabs__item {
     flex-shrink: 0;
-    padding: 0.5rem 1.25rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 999px;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background: var(--app-widget-bg, #1e2330);
     color: var(--app-on-surface, #e6e1e5);
-    font-size: 1rem;
+    font-size: 1.15rem;
     cursor: pointer;
     outline: none;
     transition:

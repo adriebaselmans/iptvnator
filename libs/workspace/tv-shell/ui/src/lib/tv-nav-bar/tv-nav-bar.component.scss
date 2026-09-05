@@ -1,23 +1,31 @@
 :host {
     display: flex;
     flex-direction: row;
-    gap: 1rem;
+    gap: 1.25rem;
+    padding: 0.75rem 3rem;
+    box-sizing: border-box;
 }
 
 .tv-nav-bar__item {
-    padding: 0.5rem 1.25rem;
-    font-size: 1rem;
+    padding: 0.75rem 1.75rem;
+    font-size: 1.25rem;
     border-radius: 0.5rem;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background: transparent;
     color: inherit;
     cursor: pointer;
+    letter-spacing: 0.01em;
+    transition:
+        border-color 120ms ease,
+        background-color 120ms ease;
 
     &.tv-nav-bar__item--active {
         font-weight: 600;
+        background: var(--app-selection-surface, rgba(120, 173, 255, 0.1));
     }
 
     &.tv-focused {
-        border-color: var(--mat-app-primary-color, #fff);
+        border-color: var(--app-selection-color, #78adff);
+        box-shadow: 0 0 0 6px var(--app-selection-glow, rgba(120, 173, 255, 0.4));
     }
 }
